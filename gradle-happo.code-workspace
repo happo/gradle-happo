@@ -1,0 +1,19 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.import.gradle.enabled": true,
+    "java.import.gradle.wrapper.enabled": true,
+    "kotlin.languageServer.enabled": true,
+    "gradle.nestedProjects": true,
+    "gradle.buildServer.enabled": "on",
+    "java.compile.nullAnalysis.mode": "automatic"
+  },
+  "extensions": {
+    "recommendations": ["fwcd.kotlin", "vscjava.vscode-gradle", "redhat.java"]
+  }
+}
