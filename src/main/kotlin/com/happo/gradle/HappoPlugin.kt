@@ -2,38 +2,43 @@ package com.happo.gradle
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.tasks.TaskProvider
 
 class HappoPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         // Create the Happo extension
         val happoExtension = project.extensions.create("happo", HappoExtension::class.java)
-        
+
         // Register the createHappoReport task
-        val createHappoReportTask = project.tasks.register("createHappoReport", CreateHappoReportTask::class.java) { task ->
-            task.group = "happo"
-            task.description = "Upload screenshots to Happo and create a report"
-        }
-        
+        val createHappoReportTask =
+                project.tasks.register("createHappoReport", CreateHappoReportTask::class.java) {
+                        task ->
+                    task.group = "happo"
+                    task.description = "Upload screenshots to Happo and create a report"
+                }
+
         // Register the compareHappoReports task
-        val compareHappoReportsTask = project.tasks.register("compareHappoReports", CompareHappoReportsTask::class.java) { task ->
-            task.group = "happo"
-            task.description = "Compare two Happo reports by their SHA1 identifiers"
-        }
-        
+        val compareHappoReportsTask =
+                project.tasks.register(
+                        "compareHappoReports",
+                        CompareHappoReportsTask::class.java
+                ) { task ->
+                    task.group = "happo"
+                    task.description = "Compare two Happo reports by their SHA1 identifiers"
+                }
+
         // Configure tasks with extension values
         project.afterEvaluate {
             createHappoReportTask.configure { task ->
                 task.apiKey.set(happoExtension.apiKey)
-                task.projectId.set(happoExtension.projectId)
+                task.apiSecret.set(happoExtension.apiSecret)
+                task.project.set(happoExtension.project)
                 task.screenshotsDir.set(happoExtension.screenshotsDir)
-                task.branch.set(happoExtension.branch)
-                task.commit.set(happoExtension.commit)
             }
-            
+
             compareHappoReportsTask.configure { task ->
                 task.apiKey.set(happoExtension.apiKey)
-                task.projectId.set(happoExtension.projectId)
+                task.apiSecret.set(happoExtension.apiSecret)
+                task.project.set(happoExtension.project)
             }
         }
     }
