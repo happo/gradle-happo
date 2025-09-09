@@ -23,6 +23,7 @@ dependencies {
     testImplementation("org.mockito:mockito-junit-jupiter:5.8.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.21")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.21")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 }
 
 gradlePlugin {

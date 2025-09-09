@@ -13,18 +13,17 @@ import okhttp3.RequestBody.Companion.toRequestBody
 class HappoApiClient(
         private val apiKey: String,
         private val apiSecret: String,
-        private val project: String
+        private val project: String,
+        private val client: OkHttpClient =
+                OkHttpClient.Builder()
+                        .connectTimeout(30, TimeUnit.SECONDS)
+                        .readTimeout(60, TimeUnit.SECONDS)
+                        .writeTimeout(60, TimeUnit.SECONDS)
+                        .build(),
+        private val baseUrl: String = "https://happo.io/"
 ) {
-    private val client =
-            OkHttpClient.Builder()
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(60, TimeUnit.SECONDS)
-                    .writeTimeout(60, TimeUnit.SECONDS)
-                    .build()
 
     private val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
-
-    private val baseUrl = "https://happo.io/"
 
     data class UploadResponse(
             val url: String,
