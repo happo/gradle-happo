@@ -3,6 +3,7 @@ package com.happo.gradle
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 
 abstract class CompareHappoReportsTask : DefaultTask() {
@@ -15,12 +16,18 @@ abstract class CompareHappoReportsTask : DefaultTask() {
 
     @get:Input abstract val baseUrl: Property<String>
 
+    @get:Input @get:Optional abstract val link: Property<String>
+
+    @get:Input @get:Optional abstract val message: Property<String>
+
     @TaskAction
     fun compareReports() {
         val apiKey = apiKey.get()
         val apiSecret = apiSecret.get()
         val projectName = projectName.get()
         val baseUrl = baseUrl.get()
+        val link = link.orNull
+        val message = message.orNull
 
         if (apiKey.isBlank()) {
             throw IllegalArgumentException(
@@ -40,16 +47,20 @@ abstract class CompareHappoReportsTask : DefaultTask() {
             firstSha = gitHelper.findBaselineSha("HEAD^")
         }
         val fallbackShas = gitHelper.findFallbackShas(firstSha)
+        // Use git commit subject as default message if not provided
+        val reportMessage = message ?: gitHelper.getCommitSubject(secondSha)
 
         logger.lifecycle("Comparing Happo reports...")
         logger.lifecycle("Project: $projectName")
         logger.lifecycle("First SHA: $firstSha")
         logger.lifecycle("Second SHA: $secondSha")
         logger.lifecycle("Fallback SHAs: $fallbackShas")
+        logger.lifecycle("Message: $reportMessage")
+        link?.let { logger.lifecycle("Link: $it") }
 
         try {
             val apiClient = HappoApiClient(apiKey, apiSecret, projectName, baseUrl = baseUrl)
-            val response = apiClient.compareReports(firstSha, secondSha)
+            val response = apiClient.compareReports(firstSha, secondSha, link, reportMessage)
 
             logger.lifecycle("✅ Comparison created successfully!")
             logger.lifecycle(response.compareUrl)

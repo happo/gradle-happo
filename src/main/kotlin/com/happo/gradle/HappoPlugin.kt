@@ -84,6 +84,8 @@ class HappoPlugin : Plugin<Project> {
                                 task.apiSecret.set(happoExtension.apiSecret)
                                 task.projectName.set(happoExtension.projectName)
                                 task.baseUrl.set(happoExtension.baseUrl)
+                                task.link.set(happoExtension.link)
+                                task.message.set(happoExtension.message)
                         }
                 }
         }

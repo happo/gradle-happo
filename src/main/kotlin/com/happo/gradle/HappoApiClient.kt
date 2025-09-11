@@ -52,7 +52,12 @@ class HappoApiClient(
             val link: String? = null,
             val message: String? = null
     )
-    data class CompareRequest(val project: String, val isAsync: Boolean)
+    data class CompareRequest(
+            val project: String,
+            val isAsync: Boolean,
+            val link: String? = null,
+            val message: String? = null
+    )
 
     data class ScreenshotInfo(
             val component: String,
@@ -124,8 +129,14 @@ class HappoApiClient(
         }
     }
 
-    fun compareReports(sha1: String, sha2: String): CompareResponse {
-        val compareRequest = CompareRequest(project = project, isAsync = true)
+    fun compareReports(
+            sha1: String,
+            sha2: String,
+            link: String? = null,
+            message: String? = null
+    ): CompareResponse {
+        val compareRequest =
+                CompareRequest(project = project, isAsync = true, link = link, message = message)
 
         val requestBody =
                 objectMapper
