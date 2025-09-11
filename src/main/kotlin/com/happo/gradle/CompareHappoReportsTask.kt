@@ -4,7 +4,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.options.Option
 
 abstract class CompareHappoReportsTask : DefaultTask() {
 
@@ -15,14 +14,6 @@ abstract class CompareHappoReportsTask : DefaultTask() {
     @get:Input abstract val projectName: Property<String>
 
     @get:Input abstract val baseUrl: Property<String>
-
-    @get:Input
-    @Option(option = "sha1", description = "Commit sha of the baseline report")
-    var sha1: String? = null
-
-    @get:Input
-    @Option(option = "sha2", description = "Commit sha of the new report")
-    var sha2: String? = null
 
     @TaskAction
     fun compareReports() {
@@ -42,21 +33,16 @@ abstract class CompareHappoReportsTask : DefaultTask() {
             )
         }
 
-        val firstSha =
-                sha1
-                        ?: throw IllegalArgumentException(
-                                "Baseline commit SHA is required. Use --sha1 option."
-                        )
-        val secondSha =
-                sha2
-                        ?: throw IllegalArgumentException(
-                                "New commit SHA is required. Use --sha2 option."
-                        )
+        val gitHelper = GitHelper()
+        val firstSha = gitHelper.findBaselineSha()
+        val secondSha = gitHelper.findHEADSha()
+        val fallbackShas = gitHelper.findFallbackShas(firstSha)
 
         logger.lifecycle("Comparing Happo reports...")
         logger.lifecycle("Project: $projectName")
         logger.lifecycle("First SHA: $firstSha")
         logger.lifecycle("Second SHA: $secondSha")
+        logger.lifecycle("Fallback SHAs: $fallbackShas")
 
         try {
             val apiClient = HappoApiClient(apiKey, apiSecret, projectName, baseUrl = baseUrl)

@@ -48,6 +48,7 @@ class HappoApiClient(
     )
 
     data class UploadRequest(val project: String, val snaps: List<ScreenshotInfo>)
+    data class CompareRequest(val project: String, val isAsync: Boolean)
 
     data class ScreenshotInfo(
             val component: String,
@@ -109,11 +110,17 @@ class HappoApiClient(
     }
 
     fun compareReports(sha1: String, sha2: String): CompareResponse {
+        val compareRequest = CompareRequest(project = project, isAsync = true)
+
+        val requestBody =
+                objectMapper
+                        .writeValueAsString(compareRequest)
+                        .toRequestBody("application/json".toMediaType())
         val request =
                 Request.Builder()
                         .url("$baseUrl/api/reports/$sha1/compare/$sha2")
                         .addHeader("Authorization", createAuthHeader())
-                        .get()
+                        .post(requestBody)
                         .build()
 
         return executeRequest(request) { response: Response ->
@@ -173,9 +180,6 @@ class HappoApiClient(
 
     private fun getImageDimensions(imageFile: File): Pair<Int, Int> {
         val bufferedImage: BufferedImage = ImageIO.read(imageFile)
-        if (bufferedImage == null) {
-            throw IllegalArgumentException("Could not read dimensions for ${imageFile.name}")
-        }
         return Pair(bufferedImage.width, bufferedImage.height)
     }
 

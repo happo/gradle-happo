@@ -7,25 +7,6 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.TaskAction
 
-fun findHEADSha(): String {
-    return try {
-        val process = ProcessBuilder("git", "rev-parse", "HEAD").redirectErrorStream(true).start()
-
-        val output = process.inputStream.bufferedReader().readText().trim()
-        val exitCode = process.waitFor()
-
-        if (exitCode == 0) {
-            output
-        } else {
-            throw RuntimeException(
-                    "Failed to get HEAD SHA: git rev-parse HEAD exited with code $exitCode"
-            )
-        }
-    } catch (e: Exception) {
-        throw RuntimeException("Failed to execute git rev-parse HEAD: ${e.message}", e)
-    }
-}
-
 abstract class CreateHappoReportTask : DefaultTask() {
 
     @get:Input abstract val apiKey: Property<String>
@@ -45,7 +26,7 @@ abstract class CreateHappoReportTask : DefaultTask() {
         val projectName = projectName.get()
         val screenshotsDir = screenshotsDir.get()
         val baseUrl = baseUrl.get()
-        val sha = findHEADSha()
+        val sha = GitHelper().findHEADSha()
 
         if (apiKey.isBlank()) {
             throw IllegalArgumentException(
