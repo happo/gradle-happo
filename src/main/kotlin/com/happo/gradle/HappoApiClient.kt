@@ -3,10 +3,12 @@ package com.happo.gradle
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import java.awt.image.BufferedImage
 import java.io.File
 import java.io.IOException
 import java.util.Base64
 import java.util.concurrent.TimeUnit
+import javax.imageio.ImageIO
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -169,6 +171,14 @@ class HappoApiClient(
         }
     }
 
+    private fun getImageDimensions(imageFile: File): Pair<Int, Int> {
+        val bufferedImage: BufferedImage = ImageIO.read(imageFile)
+        if (bufferedImage == null) {
+            throw IllegalArgumentException("Could not read dimensions for ${imageFile.name}")
+        }
+        return Pair(bufferedImage.width, bufferedImage.height)
+    }
+
     fun discoverScreenshots(screenshotsDir: File): List<ScreenshotInfo> {
         val screenshots = mutableListOf<ScreenshotInfo>()
 
@@ -180,8 +190,7 @@ class HappoApiClient(
                 val component = parts.getOrNull(0) ?: "unknown"
                 val variant = parts.getOrNull(1) ?: "default"
                 val target = parts.getOrNull(2) ?: "device"
-                val width = 500
-                val height = 500
+                val (width, height) = getImageDimensions(file)
 
                 screenshots.add(
                         ScreenshotInfo(
