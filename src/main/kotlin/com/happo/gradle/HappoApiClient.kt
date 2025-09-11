@@ -1,5 +1,6 @@
 package com.happo.gradle
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import java.io.File
@@ -32,12 +33,12 @@ class HappoApiClient(
         return authHeader
     }
 
-    data class UploadResponse(
-            val url: String,
-    )
+    @JsonIgnoreProperties(ignoreUnknown = true) data class UploadResponse(val url: String)
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     data class CompareResponse(val equal: Boolean, val summary: String)
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     data class ImageUploadResponse(
             val uploadUrl: String? = null,
             val url: String,
@@ -73,6 +74,7 @@ class HappoApiClient(
         // Upload each screenshot and get their URLs
         val screenshotsWithUrls =
                 screenshots.map { screenshot ->
+                    println("Uploading screenshot: ${screenshot.fileName}")
                     val file = File(screenshotsDir, screenshot.fileName)
                     if (!file.exists()) {
                         throw IllegalArgumentException(
@@ -81,6 +83,7 @@ class HappoApiClient(
                     }
                     val hash = ImageFileHashCalculator().calculate(file)
                     val imageUrl = uploadImage(file, hash)
+                    println("Uploaded screenshot: ${screenshot.fileName} to $imageUrl")
                     screenshot.copy(url = imageUrl)
                 }
 
@@ -130,7 +133,15 @@ class HappoApiClient(
     }
 
     fun uploadImageFile(uploadUrl: String, imageFile: File): String {
-        val requestBody = imageFile.asRequestBody("image/png".toMediaType())
+        val requestBody =
+                MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart(
+                                "file",
+                                imageFile.name,
+                                imageFile.asRequestBody("image/png".toMediaType())
+                        )
+                        .build()
 
         val request =
                 Request.Builder()
