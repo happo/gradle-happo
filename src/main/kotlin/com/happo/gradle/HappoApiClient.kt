@@ -37,8 +37,7 @@ class HappoApiClient(
 
     @JsonIgnoreProperties(ignoreUnknown = true) data class UploadResponse(val url: String)
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    data class CompareResponse(val equal: Boolean, val summary: String)
+    @JsonIgnoreProperties(ignoreUnknown = true) data class CompareResponse(val compareUrl: String)
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     data class ImageUploadResponse(

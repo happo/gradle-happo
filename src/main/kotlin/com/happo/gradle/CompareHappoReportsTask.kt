@@ -34,8 +34,11 @@ abstract class CompareHappoReportsTask : DefaultTask() {
         }
 
         val gitHelper = GitHelper()
-        val firstSha = gitHelper.findBaselineSha()
+        var firstSha = gitHelper.findBaselineSha()
         val secondSha = gitHelper.findHEADSha()
+        if (firstSha == secondSha) {
+            firstSha = gitHelper.findBaselineSha("HEAD^")
+        }
         val fallbackShas = gitHelper.findFallbackShas(firstSha)
 
         logger.lifecycle("Comparing Happo reports...")
@@ -48,13 +51,8 @@ abstract class CompareHappoReportsTask : DefaultTask() {
             val apiClient = HappoApiClient(apiKey, apiSecret, projectName, baseUrl = baseUrl)
             val response = apiClient.compareReports(firstSha, secondSha)
 
-            logger.lifecycle("✅ Comparison completed!")
-            logger.lifecycle(response.summary)
-            if (response.equal) {
-                logger.lifecycle("✅ No differences found")
-            } else {
-                logger.lifecycle("⚠️ Found diffs")
-            }
+            logger.lifecycle("✅ Comparison created successfully!")
+            logger.lifecycle(response.compareUrl)
         } catch (e: Exception) {
             logger.error("❌ Failed to compare Happo reports: ${e.message}")
             throw e

@@ -127,8 +127,7 @@ class HappoApiClientTest {
                 // Mock the compare response
                 val compareResponse =
                         HappoApiClient.CompareResponse(
-                                equal = true,
-                                summary = "All screenshots match"
+                                compareUrl = "https://happo.io/reports/test-sha/compare/test-sha2"
                         )
                 mockWebServer.enqueue(
                         MockResponse()
@@ -148,8 +147,10 @@ class HappoApiClientTest {
 
                 val response = testClient.compareReports("sha1", "sha2")
 
-                assertEquals(true, response.equal)
-                assertEquals("All screenshots match", response.summary)
+                assertEquals(
+                        "https://happo.io/reports/test-sha/compare/test-sha2",
+                        response.compareUrl
+                )
         }
 
         private fun createTestPngFile(file: File) {
