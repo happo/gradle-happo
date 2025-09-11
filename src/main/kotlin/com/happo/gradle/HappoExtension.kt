@@ -9,9 +9,11 @@ abstract class HappoExtension {
     abstract val projectName: Property<String>
     abstract val screenshotsDir: Property<File>
     abstract val sha: Property<String>
+    abstract val baseUrl: Property<String>
 
     init {
         // Set default values
         screenshotsDir.convention(File("screenshots"))
+        baseUrl.convention("https://happo.io")
     }
 }

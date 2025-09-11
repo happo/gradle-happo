@@ -36,12 +36,15 @@ abstract class CreateHappoReportTask : DefaultTask() {
 
     @get:InputDirectory abstract val screenshotsDir: Property<File>
 
+    @get:Input abstract val baseUrl: Property<String>
+
     @TaskAction
     fun createReport() {
         val apiKey = apiKey.get()
         val apiSecret = apiSecret.get()
         val projectName = projectName.get()
         val screenshotsDir = screenshotsDir.get()
+        val baseUrl = baseUrl.get()
         val sha = findHEADSha()
 
         if (apiKey.isBlank()) {
@@ -62,7 +65,7 @@ abstract class CreateHappoReportTask : DefaultTask() {
         logger.lifecycle("Screenshots directory: ${screenshotsDir.absolutePath}")
 
         try {
-            val apiClient = HappoApiClient(apiKey, apiSecret, projectName)
+            val apiClient = HappoApiClient(apiKey, apiSecret, projectName, baseUrl = baseUrl)
             val response = apiClient.createReport(screenshotsDir, sha)
 
             logger.lifecycle("✅ Happo report created successfully!")

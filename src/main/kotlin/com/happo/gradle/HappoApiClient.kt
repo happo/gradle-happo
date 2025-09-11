@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import java.io.File
 import java.io.IOException
+import java.util.Base64
 import java.util.concurrent.TimeUnit
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
@@ -20,10 +21,16 @@ class HappoApiClient(
                         .readTimeout(60, TimeUnit.SECONDS)
                         .writeTimeout(60, TimeUnit.SECONDS)
                         .build(),
-        private val baseUrl: String = "https://happo.io/"
+        private val baseUrl: String = "https://happo.io"
 ) {
 
     private val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
+
+    private fun createAuthHeader(): String {
+        val authHeader =
+                "Basic ${Base64.getEncoder().encodeToString("$apiKey:$apiSecret".toByteArray())}"
+        return authHeader
+    }
 
     data class UploadResponse(
             val url: String,
@@ -87,7 +94,7 @@ class HappoApiClient(
         val request =
                 Request.Builder()
                         .url("$baseUrl/api/reports/$sha")
-                        .addHeader("Authorization", "Basic $apiKey:$apiSecret")
+                        .addHeader("Authorization", createAuthHeader())
                         .post(requestBody)
                         .build()
 
@@ -100,7 +107,7 @@ class HappoApiClient(
         val request =
                 Request.Builder()
                         .url("$baseUrl/api/reports/$sha1/compare/$sha2")
-                        .addHeader("Authorization", "Basic $apiKey:$apiSecret")
+                        .addHeader("Authorization", createAuthHeader())
                         .get()
                         .build()
 
@@ -113,7 +120,7 @@ class HappoApiClient(
         val request =
                 Request.Builder()
                         .url("$baseUrl/api/images/$hash/upload-url")
-                        .addHeader("Authorization", "Basic $apiKey:$apiSecret")
+                        .addHeader("Authorization", createAuthHeader())
                         .get()
                         .build()
 
@@ -125,7 +132,12 @@ class HappoApiClient(
     fun uploadImageFile(uploadUrl: String, imageFile: File): String {
         val requestBody = imageFile.asRequestBody("image/png".toMediaType())
 
-        val request = Request.Builder().url(uploadUrl).post(requestBody).build()
+        val request =
+                Request.Builder()
+                        .url(uploadUrl)
+                        .addHeader("Authorization", createAuthHeader())
+                        .post(requestBody)
+                        .build()
 
         return executeRequest(request) { response: Response ->
             val responseBody = response.body?.string()
@@ -180,7 +192,9 @@ class HappoApiClient(
     private fun <T> executeRequest(request: Request, responseHandler: (Response) -> T): T {
         return client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
-                throw IOException("Request failed: ${response.code} ${response.message}")
+                throw IOException(
+                        "Request failed: ${response.code} ${response.message} - ${response.body?.string()}"
+                )
             }
             responseHandler(response)
         }
