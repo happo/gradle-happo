@@ -6,7 +6,7 @@ A Gradle plugin for uploading and comparing Happo visual regression test reports
 
 - **Upload Screenshots**: Upload screenshots from a specified folder to Happo
 - **Compare Reports**: Compare two Happo reports by their SHA1 identifiers
-- **Flexible Configuration**: Support for environment variables and project properties
+- **Configuration**: Support for environment variables and project properties
 - **Screenshot Discovery**: Automatically discovers screenshots in the specified directory
 
 ## Usage
@@ -26,10 +26,9 @@ Configure the plugin using the `happo` extension:
 ```kotlin
 happo {
     apiKey = "your-happo-api-key"
-    projectId = "your-happo-project-id"
+    apiSecret = "your-happo-api-secret"
+    projectName = "your-happo-project-id"
     screenshotsDir = file("src/test/screenshots")
-    branch = "main"
-    commit = "abc123"
 }
 ```
 
@@ -38,10 +37,9 @@ You can also use environment variables or project properties:
 ```kotlin
 happo {
     apiKey = project.findProperty("happo.apiKey")?.toString() ?: System.getenv("HAPPO_API_KEY") ?: ""
-    projectId = project.findProperty("happo.projectId")?.toString() ?: System.getenv("HAPPO_PROJECT_ID") ?: ""
+    apiSecret = project.findProperty("happo.apiSecret")?.toString() ?: System.getenv("HAPPO_API_SECRET") ?: ""
+    projectName = project.findProperty("happo.projectName")?.toString() ?: System.getenv("HAPPO_PROJECT_NAME") ?: ""
     screenshotsDir = file("src/test/screenshots")
-    branch = project.findProperty("happo.branch")?.toString() ?: "main"
-    commit = project.findProperty("happo.commit")?.toString() ?: "unknown"
 }
 ```
 

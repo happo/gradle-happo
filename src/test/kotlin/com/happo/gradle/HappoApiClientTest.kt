@@ -49,10 +49,10 @@ class HappoApiClientTest {
         val screenshotsDir = File(tempDir, "screenshots")
         screenshotsDir.mkdirs()
 
-        File(screenshotsDir, "Button_primary.png").createNewFile()
-        File(screenshotsDir, "Button_secondary.png").createNewFile()
-        File(screenshotsDir, "Card_default.png").createNewFile()
-        File(screenshotsDir, "Card_elevated.png").createNewFile()
+        createTestPngFile(File(screenshotsDir, "Button_primary.png"))
+        createTestPngFile(File(screenshotsDir, "Button_secondary.png"))
+        createTestPngFile(File(screenshotsDir, "Card_default.png"))
+        createTestPngFile(File(screenshotsDir, "Card_elevated.png"))
         File(screenshotsDir, "README.md").createNewFile() // Should be ignored
 
         val screenshots = client.discoverScreenshots(screenshotsDir)
@@ -78,7 +78,7 @@ class HappoApiClientTest {
     fun `can create a report`() {
         val screenshotsDir = File(tempDir, "screenshots")
         screenshotsDir.mkdirs()
-        File(screenshotsDir, "Button_primary.png").createNewFile()
+        createTestPngFile(File(screenshotsDir, "Button_primary.png"))
 
         // Mock the image upload URL response
         val imageUploadResponse =
@@ -145,5 +145,11 @@ class HappoApiClientTest {
 
         assertEquals(true, response.equal)
         assertEquals("All screenshots match", response.summary)
+    }
+
+    private fun createTestPngFile(file: File) {
+        // Copy an existing PNG file from the example directory
+        val examplePngFile = File("example/src/test/screenshots/Button_primary.png")
+        examplePngFile.copyTo(file, overwrite = true)
     }
 }
