@@ -19,7 +19,6 @@ repositories {
 project.extensions.configure<com.happo.gradle.HappoExtension>("happo") {
     apiKey.set(System.getenv("HAPPO_API_KEY") ?: "foobar")
     apiSecret.set(System.getenv("HAPPO_API_SECRET") ?: "foobar")
-    project.set("default")
-    screenshotsDir.set(file("src/test/screenshots")
-    sha.set("example-commit-sha")
+    projectName.set("default")
+    screenshotsDir.set(file("src/test/screenshots"))
 }

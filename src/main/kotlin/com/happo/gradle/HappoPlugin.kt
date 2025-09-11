@@ -33,7 +33,6 @@ class HappoPlugin : Plugin<Project> {
                 task.apiSecret.set(happoExtension.apiSecret)
                 task.projectName.set(happoExtension.projectName)
                 task.screenshotsDir.set(happoExtension.screenshotsDir)
-                task.sha.set(happoExtension.sha)
             }
 
             compareHappoReportsTask.configure { task ->
