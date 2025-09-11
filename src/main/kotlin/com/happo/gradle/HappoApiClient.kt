@@ -209,30 +209,70 @@ class HappoApiClient(
         return Pair(bufferedImage.width, bufferedImage.height)
     }
 
+    private fun mapFileToScreenshotInfo(file: File): ScreenshotInfo {
+        val nameWithoutExt = file.nameWithoutExtension
+        val (width, height) = getImageDimensions(file)
+
+        // Check if this is a Roborazzi format: path__test__variant.png
+        if (nameWithoutExt.contains("__")) {
+            // For Roborazzi format, extract component by removing .test.tsx__variant part
+            val testPattern = Regex("(.+)\\.test\\.[a-z]{2,3}__(.+)$")
+            val matchResult = testPattern.find(nameWithoutExt)
+
+            if (matchResult != null) {
+                val component = matchResult.groupValues[1]
+                val variant = matchResult.groupValues[2]
+
+                return ScreenshotInfo(
+                        component = component,
+                        variant = variant,
+                        target = "device",
+                        height = height,
+                        width = width,
+                        url = "", // Will be set after upload
+                        fileName = file.name
+                )
+            } else {
+                // Fallback to simple split on last __
+                val lastDoubleUnderscoreIndex = nameWithoutExt.lastIndexOf("__")
+                val component = nameWithoutExt.substring(0, lastDoubleUnderscoreIndex)
+                val variant = nameWithoutExt.substring(lastDoubleUnderscoreIndex + 2)
+
+                return ScreenshotInfo(
+                        component = component,
+                        variant = variant,
+                        target = "device",
+                        height = height,
+                        width = width,
+                        url = "", // Will be set after upload
+                        fileName = file.name
+                )
+            }
+        } else {
+            // Standard format: component_variant.png or component_variant_target.png
+            val parts = nameWithoutExt.split("_", limit = 3)
+            val component = parts.getOrNull(0) ?: "unknown"
+            val variant = parts.getOrNull(1) ?: "default"
+            val target = parts.getOrNull(2) ?: "device"
+
+            return ScreenshotInfo(
+                    component = component,
+                    variant = variant,
+                    target = target,
+                    height = height,
+                    width = width,
+                    url = "", // Will be set after upload
+                    fileName = file.name
+            )
+        }
+    }
+
     fun discoverScreenshots(screenshotsDir: File): List<ScreenshotInfo> {
         val screenshots = mutableListOf<ScreenshotInfo>()
 
         screenshotsDir.listFiles()?.forEach { file ->
             if (file.isFile && file.extension.lowercase().equals("png")) {
-                val nameWithoutExt = file.nameWithoutExtension
-                // Parse filename format: component_variant.png
-                val parts = nameWithoutExt.split("_", limit = 3)
-                val component = parts.getOrNull(0) ?: "unknown"
-                val variant = parts.getOrNull(1) ?: "default"
-                val target = parts.getOrNull(2) ?: "device"
-                val (width, height) = getImageDimensions(file)
-
-                screenshots.add(
-                        ScreenshotInfo(
-                                component = component,
-                                variant = variant,
-                                target = target,
-                                height = height,
-                                width = width,
-                                url = "", // Will be set after upload
-                                fileName = file.name
-                        )
-                )
+                screenshots.add(mapFileToScreenshotInfo(file))
             }
         }
 

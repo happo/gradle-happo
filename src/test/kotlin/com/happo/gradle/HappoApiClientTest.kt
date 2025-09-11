@@ -67,6 +67,44 @@ class HappoApiClientTest {
         }
 
         @Test
+        fun `handles Roborazzi filename format`() {
+                // Create test screenshots
+                val screenshotsDir = File(tempDir, "screenshots")
+                screenshotsDir.mkdirs()
+
+                createTestPngFile(
+                        File(
+                                screenshotsDir,
+                                "src__components__Button.test.tsx__renders-primary-button.png"
+                        )
+                )
+                createTestPngFile(
+                        File(
+                                screenshotsDir,
+                                "tests__integration__checkout__PaymentForm.test.tsx__should-display-error-message.png"
+                        )
+                )
+                createTestPngFile(File(screenshotsDir, "Button.test.tsx__primary.png"))
+
+                val screenshots = client.discoverScreenshots(screenshotsDir)
+
+                assertEquals(3, screenshots.size)
+                assertTrue(
+                        screenshots.any {
+                                it.component == "src__components__Button" &&
+                                        it.variant == "renders-primary-button"
+                        }
+                )
+                assertTrue(
+                        screenshots.any {
+                                it.component == "tests__integration__checkout__PaymentForm" &&
+                                        it.variant == "should-display-error-message"
+                        }
+                )
+                assertTrue(screenshots.any { it.component == "Button" && it.variant == "primary" })
+        }
+
+        @Test
         fun `should handle empty screenshots directory`() {
                 val screenshotsDir = File(tempDir, "empty")
                 screenshotsDir.mkdirs()
