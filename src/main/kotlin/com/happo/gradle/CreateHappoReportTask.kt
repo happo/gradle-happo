@@ -13,7 +13,7 @@ abstract class CreateHappoReportTask : DefaultTask() {
 
     @get:Input abstract val apiSecret: Property<String>
 
-    @get:Input abstract val project: Property<String>
+    @get:Input abstract val projectName: Property<String>
 
     @get:InputDirectory abstract val screenshotsDir: Property<File>
 
@@ -23,7 +23,7 @@ abstract class CreateHappoReportTask : DefaultTask() {
     fun createReport() {
         val apiKey = apiKey.get()
         val apiSecret = apiSecret.get()
-        val project = project.get()
+        val projectName = projectName.get()
         val screenshotsDir = screenshotsDir.get()
         val sha = sha.get()
 
@@ -40,12 +40,12 @@ abstract class CreateHappoReportTask : DefaultTask() {
         }
 
         logger.lifecycle("Creating Happo report...")
-        logger.lifecycle("Project: $project")
+        logger.lifecycle("Project: $projectName")
         logger.lifecycle("SHA: $sha")
         logger.lifecycle("Screenshots directory: ${screenshotsDir.absolutePath}")
 
         try {
-            val apiClient = HappoApiClient(apiKey, apiSecret, project)
+            val apiClient = HappoApiClient(apiKey, apiSecret, projectName)
             val response = apiClient.createReport(screenshotsDir, sha)
 
             logger.lifecycle("✅ Happo report created successfully!")

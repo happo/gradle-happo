@@ -12,7 +12,7 @@ abstract class CompareHappoReportsTask : DefaultTask() {
 
     @get:Input abstract val apiSecret: Property<String>
 
-    @get:Input abstract val project: Property<String>
+    @get:Input abstract val projectName: Property<String>
 
     @get:Input
     @Option(option = "sha1", description = "Commit sha of the baseline report")
@@ -26,7 +26,7 @@ abstract class CompareHappoReportsTask : DefaultTask() {
     fun compareReports() {
         val apiKey = apiKey.get()
         val apiSecret = apiSecret.get()
-        val project = project.get()
+        val projectName = projectName.get()
 
         if (apiKey.isBlank()) {
             throw IllegalArgumentException(
@@ -51,12 +51,12 @@ abstract class CompareHappoReportsTask : DefaultTask() {
                         )
 
         logger.lifecycle("Comparing Happo reports...")
-        logger.lifecycle("Project: $project")
+        logger.lifecycle("Project: $projectName")
         logger.lifecycle("First SHA: $firstSha")
         logger.lifecycle("Second SHA: $secondSha")
 
         try {
-            val apiClient = HappoApiClient(apiKey, apiSecret, project)
+            val apiClient = HappoApiClient(apiKey, apiSecret, projectName)
             val response = apiClient.compareReports(firstSha, secondSha)
 
             logger.lifecycle("✅ Comparison completed!")

@@ -31,14 +31,15 @@ class HappoPlugin : Plugin<Project> {
             createHappoReportTask.configure { task ->
                 task.apiKey.set(happoExtension.apiKey)
                 task.apiSecret.set(happoExtension.apiSecret)
-                task.project.set(happoExtension.project)
+                task.projectName.set(happoExtension.projectName)
                 task.screenshotsDir.set(happoExtension.screenshotsDir)
+                task.sha.set(happoExtension.sha)
             }
 
             compareHappoReportsTask.configure { task ->
                 task.apiKey.set(happoExtension.apiKey)
                 task.apiSecret.set(happoExtension.apiSecret)
-                task.project.set(happoExtension.project)
+                task.projectName.set(happoExtension.projectName)
             }
         }
     }
