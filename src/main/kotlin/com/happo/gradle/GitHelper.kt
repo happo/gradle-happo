@@ -76,4 +76,28 @@ class GitHelper() {
             )
         }
     }
+
+    fun getCommitSubject(sha: String = "HEAD"): String {
+        return try {
+            val process =
+                    ProcessBuilder("git", "log", "--format=%s", "-n", "1", sha)
+                            .redirectErrorStream(true)
+                            .start()
+            val output = process.inputStream.bufferedReader().readText().trim()
+            val exitCode = process.waitFor()
+
+            if (exitCode == 0) {
+                output
+            } else {
+                throw RuntimeException(
+                        "Failed to get commit subject: git log --format=%s -n 1 $sha exited with code $exitCode"
+                )
+            }
+        } catch (e: Exception) {
+            throw RuntimeException(
+                    "Failed to execute git log --format=%s -n 1 $sha: ${e.message}",
+                    e
+            )
+        }
+    }
 }

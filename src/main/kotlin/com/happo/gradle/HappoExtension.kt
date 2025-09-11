@@ -10,10 +10,13 @@ abstract class HappoExtension {
     abstract val screenshotsDir: Property<File>
     abstract val sha: Property<String>
     abstract val baseUrl: Property<String>
+    abstract val link: Property<String>
+    abstract val message: Property<String>
 
     init {
         // Set default values
         screenshotsDir.convention(File("screenshots"))
         baseUrl.convention("https://happo.io")
+        projectName.convention("default")
     }
 }

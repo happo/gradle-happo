@@ -123,6 +123,58 @@ class HappoApiClientTest {
         }
 
         @Test
+        fun `can create a report with link and message`() {
+                val screenshotsDir = File(tempDir, "screenshots")
+                screenshotsDir.mkdirs()
+                createTestPngFile(File(screenshotsDir, "Button_primary.png"))
+
+                // Mock the image upload URL response
+                val imageUploadResponse =
+                        HappoApiClient.ImageUploadResponse(
+                                uploadUrl = null,
+                                url = "https://happo.io/images/test-hash.png",
+                                message = null
+                        )
+                mockWebServer.enqueue(
+                        MockResponse()
+                                .setResponseCode(200)
+                                .setHeader("Content-Type", "application/json")
+                                .setBody(objectMapper.writeValueAsString(imageUploadResponse))
+                )
+
+                // Mock the report creation response
+                val reportResponse =
+                        HappoApiClient.UploadResponse(url = "https://happo.io/reports/test-sha")
+                mockWebServer.enqueue(
+                        MockResponse()
+                                .setResponseCode(200)
+                                .setHeader("Content-Type", "application/json")
+                                .setBody(objectMapper.writeValueAsString(reportResponse))
+                )
+
+                // Create a client that uses the mock server URL
+                val httpClient = OkHttpClient.Builder().build()
+                val testClient =
+                        HappoApiClient(
+                                apiKey = "test-api-key",
+                                apiSecret = "test-secret",
+                                project = "test-project",
+                                client = httpClient,
+                                baseUrl = mockWebServer.url("/").toString()
+                        )
+
+                val response =
+                        testClient.createReport(
+                                screenshotsDir,
+                                "test-sha",
+                                link = "https://github.com/happo/foobar/pr/3",
+                                message = "PR title"
+                        )
+
+                assertEquals("https://happo.io/reports/test-sha", response.url)
+        }
+
+        @Test
         fun `can compare reports`() {
                 // Mock the compare response
                 val compareResponse =

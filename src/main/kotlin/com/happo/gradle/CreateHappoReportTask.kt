@@ -5,6 +5,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 
 abstract class CreateHappoReportTask : DefaultTask() {
@@ -19,6 +20,10 @@ abstract class CreateHappoReportTask : DefaultTask() {
 
     @get:Input abstract val baseUrl: Property<String>
 
+    @get:Input @get:Optional abstract val link: Property<String>
+
+    @get:Input @get:Optional abstract val message: Property<String>
+
     @TaskAction
     fun createReport() {
         val apiKey = apiKey.get()
@@ -26,7 +31,13 @@ abstract class CreateHappoReportTask : DefaultTask() {
         val projectName = projectName.get()
         val screenshotsDir = screenshotsDir.get()
         val baseUrl = baseUrl.get()
+        val link = link.orNull
+        val message = message.orNull
         val sha = GitHelper().findHEADSha()
+        val gitHelper = GitHelper()
+
+        // Use git commit subject as default message if not provided
+        val reportMessage = message ?: gitHelper.getCommitSubject(sha)
 
         if (apiKey.isBlank()) {
             throw IllegalArgumentException(
@@ -43,11 +54,13 @@ abstract class CreateHappoReportTask : DefaultTask() {
         logger.lifecycle("Creating Happo report...")
         logger.lifecycle("Project: $projectName")
         logger.lifecycle("SHA: $sha")
+        logger.lifecycle("Message: $reportMessage")
+        link?.let { logger.lifecycle("Link: $it") }
         logger.lifecycle("Screenshots directory: ${screenshotsDir.absolutePath}")
 
         try {
             val apiClient = HappoApiClient(apiKey, apiSecret, projectName, baseUrl = baseUrl)
-            val response = apiClient.createReport(screenshotsDir, sha)
+            val response = apiClient.createReport(screenshotsDir, sha, link, reportMessage)
 
             logger.lifecycle("✅ Happo report created successfully!")
             logger.lifecycle("URL: ${response.url}")

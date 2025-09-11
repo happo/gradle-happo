@@ -46,7 +46,12 @@ class HappoApiClient(
             val message: String? = null
     )
 
-    data class UploadRequest(val project: String, val snaps: List<ScreenshotInfo>)
+    data class UploadRequest(
+            val project: String,
+            val snaps: List<ScreenshotInfo>,
+            val link: String? = null,
+            val message: String? = null
+    )
     data class CompareRequest(val project: String, val isAsync: Boolean)
 
     data class ScreenshotInfo(
@@ -59,7 +64,12 @@ class HappoApiClient(
             val fileName: String
     )
 
-    fun createReport(screenshotsDir: File, sha: String): UploadResponse {
+    fun createReport(
+            screenshotsDir: File,
+            sha: String,
+            link: String? = null,
+            message: String? = null
+    ): UploadResponse {
         if (!screenshotsDir.exists() || !screenshotsDir.isDirectory) {
             throw IllegalArgumentException(
                     "Screenshots directory does not exist: ${screenshotsDir.absolutePath}"
@@ -89,7 +99,13 @@ class HappoApiClient(
                     screenshot.copy(url = imageUrl)
                 }
 
-        val uploadRequest = UploadRequest(project = project, snaps = screenshotsWithUrls)
+        val uploadRequest =
+                UploadRequest(
+                        project = project,
+                        snaps = screenshotsWithUrls,
+                        link = link,
+                        message = message
+                )
 
         val requestBody =
                 objectMapper

@@ -53,12 +53,33 @@ Uploads all screenshots from the configured directory to Happo and creates a rep
 ./gradlew createHappoReport
 ```
 
+You can also provide optional parameters using Gradle properties:
+
+```bash
+./gradlew createHappoReport -Phappo.link="https://github.com/happo/foobar/pr/3" -Phappo.message="PR title"
+```
+
+**Parameters:**
+
+- `-Phappo.link`: Optional URL link to associate with the report (e.g., PR link)
+- `-Phappo.message`: Optional message to include with the report. If not provided, defaults to the git commit subject
+
+Alternatively, you can configure these in your `build.gradle.kts`:
+
+```kotlin
+happo {
+    link = "https://github.com/happo/foobar/pr/3"
+    message = "PR title"
+}
+```
+
 This task will:
 
 - Discover all PNG/JPG images in the screenshots directory
 - Parse component and variant names from filenames (format: `component_variant.png`)
 - Upload screenshots to Happo
 - Create a report and return the SHA1 identifier
+- Use the git commit subject as the default message if no message is provided
 
 #### compareHappoReports
 
