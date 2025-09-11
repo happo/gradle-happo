@@ -62,7 +62,7 @@ abstract class CompareHappoReportsTask : DefaultTask() {
             val apiClient = HappoApiClient(apiKey, apiSecret, projectName, baseUrl = baseUrl)
             val response = apiClient.compareReports(firstSha, secondSha, link, reportMessage)
 
-            logger.lifecycle("✅ Comparison created successfully!")
+            logger.lifecycle("✅ Comparison created")
             logger.lifecycle(response.compareUrl)
         } catch (e: Exception) {
             logger.error("❌ Failed to compare Happo reports: ${e.message}")

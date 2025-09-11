@@ -45,6 +45,7 @@ class HappoApiClient(
             val url: String,
             val message: String? = null
     )
+    @JsonIgnoreProperties(ignoreUnknown = true) data class CreateJobResponse(val url: String)
 
     data class UploadRequest(
             val project: String,
@@ -52,9 +53,17 @@ class HappoApiClient(
             val link: String? = null,
             val message: String? = null
     )
+
     data class CompareRequest(
             val project: String,
             val isAsync: Boolean,
+            val link: String? = null,
+            val message: String? = null
+    )
+    data class CreateJobRequest(
+            val project: String,
+            val sha1: String,
+            val sha2: String,
             val link: String? = null,
             val message: String? = null
     )
@@ -137,6 +146,30 @@ class HappoApiClient(
     ): CompareResponse {
         val compareRequest =
                 CompareRequest(project = project, isAsync = true, link = link, message = message)
+
+        // Tell Happo that we are about to run a job using https://happo.io/docs/api#createJob
+        val createJobRequest =
+                CreateJobRequest(
+                        project = project,
+                        sha1 = sha1,
+                        sha2 = sha2,
+                        link = link,
+                        message = message
+                )
+
+        val createJobRequestBody =
+                objectMapper
+                        .writeValueAsString(createJobRequest)
+                        .toRequestBody("application/json".toMediaType())
+        val jobRequest =
+                Request.Builder()
+                        .url("$baseUrl/api/jobs/$sha1/$sha2")
+                        .addHeader("Authorization", createAuthHeader())
+                        .post(createJobRequestBody)
+                        .build()
+        executeRequest(jobRequest) { response: Response ->
+            objectMapper.readValue(response.body?.string(), CreateJobResponse::class.java)
+        }
 
         val requestBody =
                 objectMapper
