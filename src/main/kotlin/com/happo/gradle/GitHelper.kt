@@ -53,7 +53,7 @@ class GitHelper() {
         }
     }
 
-    fun findBaselineSha(fromSha: String = "HEAD", baseBranch: String = "main"): String {
+    fun findBaselineSha(fromSha: String = "HEAD", baseBranch: String = "origin/main"): String {
         return try {
             val process =
                     ProcessBuilder("git", "merge-base", baseBranch, fromSha)

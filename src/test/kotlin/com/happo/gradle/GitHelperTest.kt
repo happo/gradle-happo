@@ -46,7 +46,7 @@ class GitHelperTest {
     @Test
     fun `should get baseline SHA with custom base branch`() {
         val gitHelper = GitHelper()
-        val baselineSha = gitHelper.findBaselineSha(baseBranch = "main")
+        val baselineSha = gitHelper.findBaselineSha(baseBranch = "origin/main")
 
         assertNotNull(baselineSha)
         assertEquals(40, baselineSha.length) // SHA should be 40 characters long

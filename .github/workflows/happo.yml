@@ -1,0 +1,45 @@
+name: Happo Plugin CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full history for git operations
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build Happo plugin
+        run: ./gradlew build publishToMavenLocal
+
+      - name: Run Happo tasks in example project
+        working-directory: ./example
+        env:
+          HAPPO_API_KEY: ${{ secrets.HAPPO_API_KEY }}
+          HAPPO_API_SECRET: ${{ secrets.HAPPO_API_SECRET }}
+        run: |
+          # Create Happo report
+          ../gradlew createHappoReport
+
+          # Determine link for compareHappoReports
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            LINK="${{ github.event.pull_request.html_url }}"
+          else
+            LINK="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
+          fi
+
+          # Compare Happo reports with appropriate link
+          ../gradlew compareHappoReports -Phappo.link="$LINK"

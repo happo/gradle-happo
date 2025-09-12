@@ -48,7 +48,7 @@ class HappoPlugin : Plugin<Project> {
                 happoExtension.baseBranch.set(
                         project.provider {
                                 project.findProperty("happo.baseBranch")?.toString()
-                                        ?: System.getenv("HAPPO_BASE_BRANCH") ?: "main"
+                                        ?: System.getenv("HAPPO_BASE_BRANCH") ?: "origin/main"
                         }
                 )
 
