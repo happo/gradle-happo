@@ -28,7 +28,7 @@ happo {
     apiKey = "your-happo-api-key"
     apiSecret = "your-happo-api-secret"
     projectName = "your-happo-project-id"
-    screenshotsDir = file("src/test/screenshots")
+    screenshotsDir = file("app/build/outputs/roborazzi")
     baseBranch = "main" // Default branch for baseline comparison
 }
 ```
@@ -40,7 +40,7 @@ happo {
     apiKey = project.findProperty("happo.apiKey")?.toString() ?: System.getenv("HAPPO_API_KEY") ?: ""
     apiSecret = project.findProperty("happo.apiSecret")?.toString() ?: System.getenv("HAPPO_API_SECRET") ?: ""
     projectName = project.findProperty("happo.projectName")?.toString() ?: System.getenv("HAPPO_PROJECT_NAME") ?: ""
-    screenshotsDir = file("src/test/screenshots")
+    screenshotsDir = file("app/build/outputs/roborazzi")
     baseBranch = project.findProperty("happo.baseBranch")?.toString() ?: System.getenv("HAPPO_BASE_BRANCH") ?: "main"
 }
 ```
@@ -88,11 +88,10 @@ happo {
 
 This task will:
 
-- Discover all PNG/JPG images in the screenshots directory
-- Parse component and variant names from filenames (format: `component_variant.png`)
+- Discover all PNG images in the screenshots directory
+- Parse component and variant names from filenames
 - Upload screenshots to Happo
-- Create a report and return the SHA1 identifier
-- Use the git commit subject as the default message if no message is provided
+- Create a Happo report
 
 #### compareHappoReports
 
@@ -118,18 +117,35 @@ This task will:
 
 - Find the baseline SHA by comparing the current HEAD with the specified base branch
 - Compare the baseline report with the current HEAD report
-- Show the number of differences found
-- Provide a report URL if available
+- Provide a URL to a Happo report
 
 ### Screenshot Naming Convention
 
-The plugin expects screenshots to be named using the format: `component_variant.png`
+The plugin supports multiple screenshot naming formats:
+
+#### Standard Format
+
+Screenshots named using the format: `component_variant.png`
 
 Examples:
 
 - `Button_primary.png` → component: "Button", variant: "primary"
 - `Card_default.png` → component: "Card", variant: "default"
 - `Modal_large.png` → component: "Modal", variant: "large"
+
+#### Roborazzi Format
+
+The plugin supports Roborazzi screenshot naming conventions used by Android UI testing:
+
+- **Roborazzi format**: `package.path.TestClassName.testMethodName.png`
+
+Examples:
+
+- `com.example.helloworldapp.MainActivityTest.testMainActivity.png` → component: "MainActivityTest", variant: "testMainActivity"
+- `com.example.app.ui.LoginScreenTest.testLoginWithValidCredentials.png` → component: "LoginScreenTest", variant: "testLoginWithValidCredentials"
+- `com.company.feature.PaymentFlowTest.testPaymentSuccess.png` → component: "PaymentFlowTest", variant: "testPaymentSuccess"
+
+The plugin automatically extracts the test class name as the component and the test method name as the variant from Roborazzi-generated screenshots.
 
 ## Installation
 

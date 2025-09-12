@@ -72,6 +72,22 @@ class HappoApiClientTest {
                 val screenshotsDir = File(tempDir, "screenshots")
                 screenshotsDir.mkdirs()
 
+                // New Roborazzi format:
+                // com.example.helloworldapp.MainActivityTest.testMainActivity.png
+                createTestPngFile(
+                        File(
+                                screenshotsDir,
+                                "com.example.helloworldapp.MainActivityTest.testMainActivity.png"
+                        )
+                )
+                createTestPngFile(
+                        File(
+                                screenshotsDir,
+                                "com.example.app.ui.LoginScreenTest.users can log in.png"
+                        )
+                )
+
+                // Legacy Roborazzi format: path__test__variant.png
                 createTestPngFile(
                         File(
                                 screenshotsDir,
@@ -88,7 +104,24 @@ class HappoApiClientTest {
 
                 val screenshots = client.discoverScreenshots(screenshotsDir)
 
-                assertEquals(3, screenshots.size)
+                assertEquals(5, screenshots.size)
+
+                println("screenshots: $screenshots")
+                // Test new Roborazzi format
+                assertTrue(
+                        screenshots.any {
+                                it.component == "com.example.helloworldapp.MainActivityTest" &&
+                                        it.variant == "testMainActivity"
+                        }
+                )
+                assertTrue(
+                        screenshots.any {
+                                it.component == "com.example.app.ui.LoginScreenTest" &&
+                                        it.variant == "users can log in"
+                        }
+                )
+
+                // Test legacy Roborazzi format
                 assertTrue(
                         screenshots.any {
                                 it.component == "src__components__Button" &&
@@ -214,7 +247,19 @@ class HappoApiClientTest {
 
         @Test
         fun `can compare reports`() {
-                // Mock the compare response
+                // Mock the create job response (first call)
+                val createJobResponse =
+                        HappoApiClient.CreateJobResponse(
+                                url = "https://happo.io/jobs/test-sha/test-sha2"
+                        )
+                mockWebServer.enqueue(
+                        MockResponse()
+                                .setResponseCode(200)
+                                .setHeader("Content-Type", "application/json")
+                                .setBody(objectMapper.writeValueAsString(createJobResponse))
+                )
+
+                // Mock the compare response (second call)
                 val compareResponse =
                         HappoApiClient.CompareResponse(
                                 compareUrl = "https://happo.io/reports/test-sha/compare/test-sha2"
