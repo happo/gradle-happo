@@ -1,10 +1,13 @@
 # Gradle Happo Plugin
 
-A Gradle plugin for uploading and comparing Happo visual regression test reports.
+A Gradle plugin for creating and comparing Happo visual regression test reports.
+Use it with e.g. [Paparazzi](https://github.com/cashapp/paparazzi),
+[Roborazzi](https://github.com/takahirom/roborazzi) or any other tool that can
+produce screenshots as PNG files.
 
 ## Features
 
-- **Upload Screenshots**: Upload screenshots from a specified folder to Happo
+- **Upload Screenshots**: Upload screenshots from a specified folder to Happo and create a Happo report from them.
 - **Compare Reports**: Compare two Happo reports by their SHA1 identifiers
 - **Configuration**: Support for environment variables and project properties
 - **Screenshot Discovery**: Automatically discovers screenshots in the specified directory
@@ -40,7 +43,7 @@ happo {
     apiKey = project.findProperty("happo.apiKey")?.toString() ?: System.getenv("HAPPO_API_KEY") ?: ""
     apiSecret = project.findProperty("happo.apiSecret")?.toString() ?: System.getenv("HAPPO_API_SECRET") ?: ""
     projectName = project.findProperty("happo.projectName")?.toString() ?: System.getenv("HAPPO_PROJECT_NAME") ?: ""
-    screenshotsDir = file("app/build/outputs/roborazzi")
+    screenshotsDir = file("module/build/outputs/roborazzi")
     baseBranch = project.findProperty("happo.baseBranch")?.toString() ?: System.getenv("HAPPO_BASE_BRANCH") ?: "main"
 }
 ```
@@ -95,7 +98,8 @@ This task will:
 
 #### compareHappoReports
 
-Compares two Happo reports by their SHA1 identifiers. By default, it compares the current HEAD commit with the baseline commit from the main branch.
+Compares two Happo reports by their SHA1 identifiers. By default, it compares
+the current HEAD commit with the baseline commit from the main branch. To compare with a different base branch, use the `baseBranch` property.
 
 ```bash
 ./gradlew compareHappoReports
@@ -115,9 +119,9 @@ You can also provide optional parameters using Gradle properties:
 
 This task will:
 
-- Find the baseline SHA by comparing the current HEAD with the specified base branch
+- Find the baseline SHA by figuring out the merge base between the current HEAD with the specified base branch
 - Compare the baseline report with the current HEAD report
-- Provide a URL to a Happo report
+- Provide a URL to a Happo report showing the results of the comparison
 
 ### Screenshot Naming Convention
 
@@ -147,13 +151,11 @@ Examples:
 
 The plugin automatically extracts the test class name as the component and the test method name as the variant from Roborazzi-generated screenshots.
 
-## Installation
-
-### Using the Plugin Portal
+### Using the Plugin
 
 ```kotlin
 plugins {
-    id("com.happo.gradle") version "1.0.0"
+    id("com.happo.gradle")
 }
 ```
 
@@ -166,7 +168,7 @@ plugins {
 
 ```kotlin
 plugins {
-    id("com.happo.gradle") version "1.0.0"
+    id("com.happo.gradle")
 }
 
 repositories {
