@@ -203,12 +203,6 @@ jobs:
         with:
           fetch-depth: 0 # Required for git operations
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
       - name: Run tests and generate screenshots
         run: ./gradlew test
 
@@ -216,6 +210,7 @@ jobs:
         run: ./gradlew createHappoReport
 
       - name: Compare Happo reports
+        if: github.event_name == 'pull_request'
         run: ./gradlew compareHappoReports
 ```
 
@@ -223,8 +218,8 @@ jobs:
 
 - Set up your Happo API credentials as GitHub secrets (`HAPPO_API_KEY` and `HAPPO_API_SECRET`)
 - Use `fetch-depth: 0` to ensure full git history is available for baseline comparisons
-- The workflow creates a report from your screenshots and compares it with the baseline
-- For pull requests, the comparison link is automatically set to the PR URL
+- The workflow creates a report from your screenshots
+- For PR builds, we compare the current report with a baseline report
 
 ## Development
 
