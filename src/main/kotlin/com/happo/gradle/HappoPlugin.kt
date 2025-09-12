@@ -45,6 +45,12 @@ class HappoPlugin : Plugin<Project> {
                                         ?: System.getenv("HAPPO_MESSAGE") ?: null
                         }
                 )
+                happoExtension.baseBranch.set(
+                        project.provider {
+                                project.findProperty("happo.baseBranch")?.toString()
+                                        ?: System.getenv("HAPPO_BASE_BRANCH") ?: "main"
+                        }
+                )
 
                 // Register the createHappoReport task
                 val createHappoReportTask =
@@ -86,6 +92,7 @@ class HappoPlugin : Plugin<Project> {
                                 task.baseUrl.set(happoExtension.baseUrl)
                                 task.link.set(happoExtension.link)
                                 task.message.set(happoExtension.message)
+                                task.baseBranch.set(happoExtension.baseBranch)
                         }
                 }
         }

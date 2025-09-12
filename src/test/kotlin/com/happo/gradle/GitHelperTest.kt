@@ -33,4 +33,22 @@ class GitHelperTest {
         assertNotNull(subject)
         assert(subject.isNotEmpty())
     }
+
+    @Test
+    fun `should get baseline SHA with default main branch`() {
+        val gitHelper = GitHelper()
+        val baselineSha = gitHelper.findBaselineSha()
+
+        assertNotNull(baselineSha)
+        assertEquals(40, baselineSha.length) // SHA should be 40 characters long
+    }
+
+    @Test
+    fun `should get baseline SHA with custom base branch`() {
+        val gitHelper = GitHelper()
+        val baselineSha = gitHelper.findBaselineSha(baseBranch = "main")
+
+        assertNotNull(baselineSha)
+        assertEquals(40, baselineSha.length) // SHA should be 40 characters long
+    }
 }

@@ -53,10 +53,10 @@ class GitHelper() {
         }
     }
 
-    fun findBaselineSha(fromSha: String = "HEAD"): String {
+    fun findBaselineSha(fromSha: String = "HEAD", baseBranch: String = "main"): String {
         return try {
             val process =
-                    ProcessBuilder("git", "merge-base", "main", fromSha)
+                    ProcessBuilder("git", "merge-base", baseBranch, fromSha)
                             .redirectErrorStream(true)
                             .start()
             val output = process.inputStream.bufferedReader().readText().trim()
@@ -66,12 +66,12 @@ class GitHelper() {
                 output
             } else {
                 throw RuntimeException(
-                        "Failed to get baseline SHA: git merge-base main $fromSha exited with code $exitCode"
+                        "Failed to get baseline SHA: git merge-base $baseBranch $fromSha exited with code $exitCode"
                 )
             }
         } catch (e: Exception) {
             throw RuntimeException(
-                    "Failed to execute git merge-base main $fromSha: ${e.message}",
+                    "Failed to execute git merge-base $baseBranch $fromSha: ${e.message}",
                     e
             )
         }

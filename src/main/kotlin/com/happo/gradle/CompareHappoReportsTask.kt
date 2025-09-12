@@ -20,6 +20,8 @@ abstract class CompareHappoReportsTask : DefaultTask() {
 
     @get:Input @get:Optional abstract val message: Property<String>
 
+    @get:Input abstract val baseBranch: Property<String>
+
     @TaskAction
     fun compareReports() {
         val apiKey = apiKey.get()
@@ -28,6 +30,7 @@ abstract class CompareHappoReportsTask : DefaultTask() {
         val baseUrl = baseUrl.get()
         val link = link.orNull
         val message = message.orNull
+        val baseBranch = baseBranch.get()
 
         if (apiKey.isBlank()) {
             throw IllegalArgumentException(
@@ -41,10 +44,10 @@ abstract class CompareHappoReportsTask : DefaultTask() {
         }
 
         val gitHelper = GitHelper()
-        var firstSha = gitHelper.findBaselineSha()
+        var firstSha = gitHelper.findBaselineSha(baseBranch = baseBranch)
         val secondSha = gitHelper.findHEADSha()
         if (firstSha == secondSha) {
-            firstSha = gitHelper.findBaselineSha("HEAD^")
+            firstSha = gitHelper.findBaselineSha("HEAD^", baseBranch)
         }
         val fallbackShas = gitHelper.findFallbackShas(firstSha)
         // Use git commit subject as default message if not provided

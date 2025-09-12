@@ -29,6 +29,7 @@ happo {
     apiSecret = "your-happo-api-secret"
     projectName = "your-happo-project-id"
     screenshotsDir = file("src/test/screenshots")
+    baseBranch = "main" // Default branch for baseline comparison
 }
 ```
 
@@ -40,8 +41,20 @@ happo {
     apiSecret = project.findProperty("happo.apiSecret")?.toString() ?: System.getenv("HAPPO_API_SECRET") ?: ""
     projectName = project.findProperty("happo.projectName")?.toString() ?: System.getenv("HAPPO_PROJECT_NAME") ?: ""
     screenshotsDir = file("src/test/screenshots")
+    baseBranch = project.findProperty("happo.baseBranch")?.toString() ?: System.getenv("HAPPO_BASE_BRANCH") ?: "main"
 }
 ```
+
+**Configuration Properties:**
+
+- `apiKey`: Your Happo API key (required)
+- `apiSecret`: Your Happo API secret (required)
+- `projectName`: Your Happo project identifier (required)
+- `screenshotsDir`: Directory containing screenshot files (defaults to "screenshots")
+- `baseUrl`: Happo API base URL (defaults to "https://happo.io")
+- `link`: Optional URL link to associate with reports
+- `message`: Optional message to include with reports
+- `baseBranch`: Base branch to use for baseline comparison in `compareHappoReports` task (defaults to "main")
 
 ### Tasks
 
@@ -83,15 +96,28 @@ This task will:
 
 #### compareHappoReports
 
-Compares two Happo reports by their SHA1 identifiers.
+Compares two Happo reports by their SHA1 identifiers. By default, it compares the current HEAD commit with the baseline commit from the main branch.
 
 ```bash
-./gradlew compareHappoReports --sha1 <first-sha> --sha2 <second-sha>
+./gradlew compareHappoReports
 ```
+
+You can also provide optional parameters using Gradle properties:
+
+```bash
+./gradlew compareHappoReports -Phappo.link="https://github.com/happo/foobar/pr/3" -Phappo.message="PR title" -Phappo.baseBranch="develop"
+```
+
+**Parameters:**
+
+- `-Phappo.link`: Optional URL link to associate with the report (e.g., PR link)
+- `-Phappo.message`: Optional message to include with the report. If not provided, defaults to the git commit subject
+- `-Phappo.baseBranch`: Base branch to use for baseline comparison (defaults to "main")
 
 This task will:
 
-- Compare the two reports
+- Find the baseline SHA by comparing the current HEAD with the specified base branch
+- Compare the baseline report with the current HEAD report
 - Show the number of differences found
 - Provide a report URL if available
 
