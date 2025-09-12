@@ -5,6 +5,8 @@ Use it with e.g. [Paparazzi](https://github.com/cashapp/paparazzi),
 [Roborazzi](https://github.com/takahirom/roborazzi) or any other tool that can
 produce screenshots as PNG files.
 
+![Diff Example](./diff-example.gif)
+
 ## Features
 
 - **Upload Screenshots**: Upload screenshots from a specified folder to Happo and create a Happo report from them.
