@@ -129,4 +129,29 @@ class GitHelper() {
             )
         }
     }
+
+    fun getCommitLink(disableGitHubDetection: Boolean = false): String? {
+        // Check if we're in a GitHub pull request environment
+        // First check environment variables (for real GitHub Actions)
+        val githubEventPath =
+                System.getenv("GITHUB_EVENT_PATH") ?: System.getProperty("GITHUB_EVENT_PATH")
+
+        if (!disableGitHubDetection && githubEventPath != null) {
+            return try {
+                // Read the GitHub event JSON to get the PR head SHA
+                val eventJson = java.io.File(githubEventPath).readText()
+                val objectMapper = ObjectMapper()
+                val eventNode = objectMapper.readTree(eventJson)
+                val pr = eventNode.path("pull_request")
+                if (pr.isValueNode()) {
+                    pr.path("html_url").asText()
+                } else {
+                    eventNode.path("head_commit").path("url").asText()
+                }
+            } catch (e: Exception) {
+                null
+            }
+        }
+        return null
+    }
 }

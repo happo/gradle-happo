@@ -73,4 +73,14 @@ class GitHelperTest {
         assertNotNull(baselineSha)
         assertEquals(40, baselineSha.length) // SHA should be 40 characters long
     }
+
+    @Test
+    fun `should get commit link`() {
+        val gitHelper = GitHelper()
+
+        System.setProperty("GITHUB_EVENT_NAME", "pull_request")
+        System.setProperty("GITHUB_EVENT_PATH", "src/test/resources/github-event.json")
+        val link = gitHelper.getCommitLink()
+        assertNotNull(link)
+    }
 }

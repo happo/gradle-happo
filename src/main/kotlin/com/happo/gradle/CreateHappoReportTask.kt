@@ -38,6 +38,7 @@ abstract class CreateHappoReportTask : DefaultTask() {
 
         // Use git commit subject as default message if not provided
         val reportMessage = message ?: gitHelper.getCommitSubject(sha)
+        val reportLink = link ?: gitHelper.getCommitLink()
 
         if (apiKey.isBlank()) {
             throw IllegalArgumentException(
@@ -60,7 +61,7 @@ abstract class CreateHappoReportTask : DefaultTask() {
 
         try {
             val apiClient = HappoApiClient(apiKey, apiSecret, projectName, baseUrl = baseUrl)
-            val response = apiClient.createReport(screenshotsDir, sha, link, reportMessage)
+            val response = apiClient.createReport(screenshotsDir, sha, reportLink, reportMessage)
 
             logger.lifecycle("✅ Happo report created successfully!")
             logger.lifecycle("URL: ${response.url}")

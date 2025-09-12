@@ -177,6 +177,55 @@ repositories {
 }
 ```
 
+## GitHub Actions Integration
+
+Here's a simplified example of how to use the Happo plugin in a GitHub Actions workflow:
+
+```yaml
+name: Visual Regression Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  happo-tests:
+    runs-on: ubuntu-latest
+    env:
+      HAPPO_API_KEY: ${{ secrets.HAPPO_API_KEY }}
+      HAPPO_API_SECRET: ${{ secrets.HAPPO_API_SECRET }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for git operations
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Run tests and generate screenshots
+        run: ./gradlew test
+
+      - name: Create Happo report
+        run: ./gradlew createHappoReport
+
+      - name: Compare Happo reports
+        run: ./gradlew compareHappoReports
+```
+
+**Key points:**
+
+- Set up your Happo API credentials as GitHub secrets (`HAPPO_API_KEY` and `HAPPO_API_SECRET`)
+- Use `fetch-depth: 0` to ensure full git history is available for baseline comparisons
+- The workflow creates a report from your screenshots and compares it with the baseline
+- For pull requests, the comparison link is automatically set to the PR URL
+
 ## Development
 
 ### Building
