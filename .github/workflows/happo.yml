@@ -36,5 +36,6 @@ jobs:
         run: ../gradlew createHappoReport
 
       - name: Compare Happo reports in example project
+        if: github.event_name == 'pull_request'
         working-directory: ./example
         run: ../gradlew compareHappoReports
