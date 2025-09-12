@@ -33,7 +33,7 @@ happo {
     apiSecret = "your-happo-api-secret"
     projectName = "your-happo-project-id"
     screenshotsDir = file("app/build/outputs/roborazzi")
-    baseBranch = "main" // Default branch for baseline comparison
+    baseBranch = "origin/main" // Default branch for baseline comparison
 }
 ```
 
@@ -45,7 +45,7 @@ happo {
     apiSecret = project.findProperty("happo.apiSecret")?.toString() ?: System.getenv("HAPPO_API_SECRET") ?: ""
     projectName = project.findProperty("happo.projectName")?.toString() ?: System.getenv("HAPPO_PROJECT_NAME") ?: ""
     screenshotsDir = file("module/build/outputs/roborazzi")
-    baseBranch = project.findProperty("happo.baseBranch")?.toString() ?: System.getenv("HAPPO_BASE_BRANCH") ?: "main"
+    baseBranch = project.findProperty("happo.baseBranch")?.toString() ?: System.getenv("HAPPO_BASE_BRANCH") ?: "origin/main"
 }
 ```
 

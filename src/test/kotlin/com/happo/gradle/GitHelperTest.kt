@@ -1,10 +1,19 @@
 package com.happo.gradle
 
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
 class GitHelperTest {
+
+    @AfterEach
+    fun tearDown() {
+        // Clear system properties after each test
+        System.clearProperty("GITHUB_EVENT_NAME")
+        System.clearProperty("GITHUB_EVENT_PATH")
+    }
 
     @Test
     fun `should get HEAD SHA`() {
@@ -13,6 +22,19 @@ class GitHelperTest {
 
         assertNotNull(sha)
         assertEquals(40, sha.length) // SHA should be 40 characters long
+    }
+
+    @Test
+    fun `should get HEAD SHA from GitHub event`() {
+        val gitHelper = GitHelper()
+        val realHEAD = gitHelper.findHEADSha(disableGitHubDetection = true)
+        System.setProperty("GITHUB_EVENT_NAME", "pull_request")
+        System.setProperty("GITHUB_EVENT_PATH", "src/test/resources/github-event.json")
+        val sha = gitHelper.findHEADSha()
+
+        assertNotNull(sha)
+        assertEquals(40, sha.length) // SHA should be 40 characters long
+        assertNotEquals(realHEAD, sha)
     }
 
     @Test
@@ -46,7 +68,7 @@ class GitHelperTest {
     @Test
     fun `should get baseline SHA with custom base branch`() {
         val gitHelper = GitHelper()
-        val baselineSha = gitHelper.findBaselineSha(baseBranch = "main")
+        val baselineSha = gitHelper.findBaselineSha(baseBranch = "origin/main")
 
         assertNotNull(baselineSha)
         assertEquals(40, baselineSha.length) // SHA should be 40 characters long

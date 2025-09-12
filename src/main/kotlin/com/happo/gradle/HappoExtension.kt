@@ -19,6 +19,6 @@ abstract class HappoExtension {
         screenshotsDir.convention(File("screenshots"))
         baseUrl.convention("https://happo.io")
         projectName.convention("default")
-        baseBranch.convention("main")
+        baseBranch.convention("origin/main")
     }
 }

@@ -21,5 +21,5 @@ project.extensions.configure<com.happo.gradle.HappoExtension>("happo") {
     apiSecret.set(System.getenv("HAPPO_API_SECRET") ?: "foobar")
     projectName.set("default")
     screenshotsDir.set(file("src/test/screenshots"))
-    baseBranch.set("main")
+    baseBranch.set("origin/main")
 }
