@@ -22,8 +22,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Run tests
+        run: ./gradlew test --info
+
       - name: Build Happo plugin
-        run: ./gradlew build publishToMavenLocal
+        run: ./gradlew build publishToMavenLocal --info
 
       - name: Run Happo tasks in example project
         working-directory: ./example

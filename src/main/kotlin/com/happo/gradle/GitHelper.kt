@@ -1,9 +1,38 @@
 package com.happo.gradle
 
+import com.fasterxml.jackson.databind.ObjectMapper
+
 class GitHelper() {
     private val fallbackShasCount = 100
 
-    fun findHEADSha(): String {
+    fun findHEADSha(disableGitHubDetection: Boolean = false): String {
+        // Check if we're in a GitHub pull request environment
+        // First check environment variables (for real GitHub Actions)
+        val githubEventName =
+                System.getenv("GITHUB_EVENT_NAME") ?: System.getProperty("GITHUB_EVENT_NAME")
+        val githubEventPath =
+                System.getenv("GITHUB_EVENT_PATH") ?: System.getProperty("GITHUB_EVENT_PATH")
+
+        if (!disableGitHubDetection && githubEventName == "pull_request" && githubEventPath != null
+        ) {
+            return try {
+                // Read the GitHub event JSON to get the PR head SHA
+                val eventJson = java.io.File(githubEventPath).readText()
+                val objectMapper = ObjectMapper()
+                val eventNode = objectMapper.readTree(eventJson)
+                val headSha = eventNode.path("pull_request").path("head").path("sha").asText()
+                headSha
+            } catch (e: Exception) {
+                // Fall back to git command if JSON parsing fails
+                getHeadShaFromGit()
+            }
+        }
+
+        // Fall back to git command for non-PR environments or if GitHub detection fails
+        return getHeadShaFromGit()
+    }
+
+    private fun getHeadShaFromGit(): String {
         return try {
             val process =
                     ProcessBuilder("git", "rev-parse", "HEAD").redirectErrorStream(true).start()
