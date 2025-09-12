@@ -1,7 +1,6 @@
 # Gradle Happo Plugin
 
-A Gradle plugin for creating and comparing Happo visual regression test reports.
-Use it with e.g. [Paparazzi](https://github.com/cashapp/paparazzi),
+A Gradle plugin for creating and comparing Happo visual regression test reports from screenshots produced locally. Use it with e.g. [Paparazzi](https://github.com/cashapp/paparazzi),
 [Roborazzi](https://github.com/takahirom/roborazzi) or any other tool that can
 produce screenshots as PNG files.
 
