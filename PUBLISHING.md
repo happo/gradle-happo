@@ -1,60 +1,36 @@
 # Publishing Guide
 
-This guide explains how to publish the Happo Gradle Plugin to Maven Central.
+This guide explains how to publish the Happo Gradle Plugin to the Gradle Plugin Portal.
 
 ## Prerequisites
 
-1. **Sonatype Account**: Create an account at [Sonatype](https://central.sonatype.com/)
-2. **GPG Key**: Generate a GPG key for signing artifacts
-3. **Domain Verification**: Ensure you have control over the `io.happo` domain
-4. **License**: The project uses MIT License (already configured)
+1. **Gradle Plugin Portal Account**: Create an account at [plugins.gradle.org](https://plugins.gradle.org/)
+2. **API Keys**: Generate API keys for publishing
+3. **Domain Verification**: Ensure you have control over the `io.happo` domain (for the plugin ID)
 
 ## Setup Steps
 
-The build script automatically loads properties from `gradle-local.properties` if it exists. This file is gitignored to keep your credentials secure.
+The build script automatically loads properties from `~/.gradle/gradle.properties` if it exists.
 
-### 1. Configure Sonatype Credentials
+### 1. Configure Gradle Plugin Portal Credentials
 
-Create a `gradle-local.properties` file and add your Sonatype credentials:
-
-```properties
-ossrhUsername=your-sonatype-username
-ossrhPassword=your-sonatype-password
-```
-
-### 2. Configure GPG Signing
-
-Configure `gradle-local.properties` with the following properties. To generate a
-new GPG signing key, run `gpg --full-generate-key`, then add the properties.
+Create a `~/.gradle/gradle.properties` file (if it doesn't already exists) and
+add your Gradle Plugin Portal credentials:
 
 ```properties
-signing.keyId=your-gpg-key-id
-signing.password=your-gpg-passphrase
-signing.secretKeyRingFile=/Users/yourusername/.gnupg/secring.gpg
+gradle.publish.key=your-publish-key
+gradle.publish.secret=your-publish-secret
 ```
 
-#### Finding Your GPG Key ID
+#### Getting Your API Keys
 
-1. List your GPG keys:
+1. Go to [plugins.gradle.org](https://plugins.gradle.org/)
+2. Log in to your account
+3. Navigate to "API Keys" section
+4. Create a new API key
+5. Copy the publish key and secret to your `~/.gradle/gradle.properties` file
 
-   ```bash
-   gpg --list-secret-keys --keyid-format LONG
-   ```
-
-2. Look for output like:
-
-   ```
-   sec   rsa4096/ABC123DEF4567890 2023-01-01 [SC] [expires: 2025-01-01]
-   ```
-
-   The key ID is `ABC123DEF4567890` (the part after the slash).
-
-3. Export your public key to add to Sonatype:
-   ```bash
-   gpg --armor --export ABC123DEF4567890 | pbcopy
-   ```
-
-### 3. Update Version
+### 2. Update Version
 
 Before publishing, update the version in `build.gradle.kts`:
 
@@ -64,58 +40,55 @@ version = "1.0.1" // or your desired version
 
 ## Publishing Commands
 
-### Publish to Staging Repository
+### Publish to Gradle Plugin Portal
 
 ```bash
-./gradlew publishToSonatype
+./gradlew publishPlugins
 ```
 
 This will:
 
 - Build the project
-- Sign the artifacts with GPG
-- Upload to Sonatype staging repository
+- Upload the plugin to the Gradle Plugin Portal
+- Make it available for users to apply with `plugins { id("io.happo.gradle") version "1.0.1" }`
 
-### Release from Staging
+### Dry Run (Test Before Publishing)
 
-After successful upload, you need to:
-
-1. Go to [Sonatype Nexus](https://s01.oss.sonatype.org/)
-2. Log in with your credentials
-3. Navigate to "Staging Repositories"
-4. Find your uploaded repository
-5. Click "Close" to validate the artifacts
-6. Once validation passes, click "Release" to publish to Maven Central
-
-### Alternative: Auto-release
-
-You can also use the `closeAndReleaseSonatypeStagingRepository` task to automatically close and release:
+To see what would be published without actually publishing:
 
 ```bash
-./gradlew closeAndReleaseSonatypeStagingRepository
+./gradlew publishPlugins --dry-run
 ```
+
+## Plugin Configuration
+
+The plugin is configured in `build.gradle.kts` with the following details:
+
+- **Plugin ID**: `io.happo.gradle`
+- **Display Name**: "Happo Gradle Plugin"
+- **Description**: "A Gradle plugin for uploading and comparing Happo visual regression test reports"
 
 ## Verification
 
-After release, your artifact will be available at:
+After publishing, your plugin will be available at:
 
-- Maven Central: `https://repo1.maven.org/maven2/io/happo/gradle-happo/`
-- Search: [Maven Central Search](https://search.maven.org/)
+- **Plugin Portal**: [https://plugins.gradle.org/plugin/io.happo.gradle](https://plugins.gradle.org/plugin/io.happo.gradle)
+- **Usage**: Users can apply it with `plugins { id("io.happo.gradle") version "1.0.1" }`
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Authentication Failed**: Double-check your Sonatype credentials
-2. **Signing Failed**: Verify your GPG key configuration
-3. **Validation Errors**: Check that all POM metadata is correct
+1. **Authentication Failed**: Double-check your Gradle Plugin Portal credentials
+2. **Plugin ID Conflict**: Ensure the `io.happo.gradle` plugin ID is available
+3. **Version Already Exists**: Increment the version number if the version already exists
 4. **Domain Verification**: Ensure you have access to the `io.happo` domain
 
 ### Useful Commands
 
-- Check what will be published: `./gradlew publishToSonatype --dry-run`
-- Validate POM: `./gradlew generatePomFileForMavenPublication`
-- View generated POM: `cat build/publications/maven/pom-default.xml`
+- Check what will be published: `./gradlew publishPlugins --dry-run`
+- Validate plugin metadata: `./gradlew validatePlugins`
+- View plugin details: `./gradlew pluginUnderTestMetadata`
 
 ## Version Management
 
@@ -129,5 +102,13 @@ Follow semantic versioning:
 
 - Never commit credentials to git
 - Use environment variables or local gradle.properties
-- Keep your GPG key secure
-- Regularly rotate passwords
+- Keep your API keys secure
+- Regularly rotate API keys
+
+## Benefits of Gradle Plugin Portal
+
+- **Official Distribution**: The official way to distribute Gradle plugins
+- **Easy Discovery**: Users can find your plugin easily
+- **Automatic Updates**: Users get notified of new versions
+- **No Manual Setup**: No need to configure repositories
+- **Better Integration**: Works seamlessly with Gradle's plugin system
