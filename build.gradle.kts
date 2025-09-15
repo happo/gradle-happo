@@ -58,12 +58,15 @@ tasks.withType<Test> {
 
 // Gradle Plugin Portal configuration
 gradlePlugin {
+    website.set("https://github.com/happo/gradle-happo")
+    vcsUrl.set("https://github.com/happo/gradle-happo.git")
     plugins {
         create("happo") {
             id = "io.happo.gradle"
             implementationClass = "io.happo.gradle.HappoPlugin"
             displayName = "Happo Gradle Plugin"
             description = "A Gradle plugin for uploading and comparing Happo visual regression test reports"
+            tags.set(listOf("happo", "visual-regression", "testing", "screenshots"))
         }
     }
 }
