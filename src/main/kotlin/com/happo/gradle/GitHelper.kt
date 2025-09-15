@@ -5,18 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper
 class GitHelper() {
     private val fallbackShasCount = 100
 
-    fun findHEADSha(disableGitHubDetection: Boolean = false): String {
-        // Check if we're in a GitHub pull request environment
-        // First check environment variables (for real GitHub Actions)
-        val githubEventName =
-                System.getenv("GITHUB_EVENT_NAME") ?: System.getProperty("GITHUB_EVENT_NAME")
-        val githubEventPath =
-                System.getenv("GITHUB_EVENT_PATH") ?: System.getProperty("GITHUB_EVENT_PATH")
-
-        if (!disableGitHubDetection && githubEventName == "pull_request" && githubEventPath != null
-        ) {
+    fun findHEADSha(
+            githubEventName: String? = System.getenv("GITHUB_EVENT_NAME"),
+            githubEventPath: String? = System.getenv("GITHUB_EVENT_PATH")
+    ): String {
+        // Check if we're in a GitHub Actions environment
+        if (githubEventName == "pull_request" && githubEventPath != null) {
             return try {
-                // Read the GitHub event JSON to get the PR head SHA
+                // Read the GitHub event JSON to get the PR SHA
                 val eventJson = java.io.File(githubEventPath).readText()
                 val objectMapper = ObjectMapper()
                 val eventNode = objectMapper.readTree(eventJson)
@@ -130,14 +126,9 @@ class GitHelper() {
         }
     }
 
-    fun getCommitLink(disableGitHubDetection: Boolean = false): String? {
-        // Check if we're in a GitHub pull request environment
-        // First check environment variables (for real GitHub Actions)
-        val githubEventPath =
-                System.getenv("GITHUB_EVENT_PATH") ?: System.getProperty("GITHUB_EVENT_PATH")
-
-        if (!disableGitHubDetection && githubEventPath != null) {
-            // Read the GitHub event JSON to get the PR head SHA
+    fun getCommitLink(githubEventPath: String? = System.getenv("GITHUB_EVENT_PATH")): String? {
+        // Check if we're in a GitHub Actions environment
+        if (githubEventPath != null) {
             val eventJson = java.io.File(githubEventPath).readText()
             val objectMapper = ObjectMapper()
             val eventNode = objectMapper.readTree(eventJson)
