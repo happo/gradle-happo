@@ -6,9 +6,13 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.IOException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.util.Base64
 import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
+import kotlin.math.min
+import kotlin.math.pow
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -27,256 +31,333 @@ class HappoApiClient(
         private val baseUrl: String = "https://happo.io"
 ) {
 
-    private val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
+        private val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
 
-    private fun createAuthHeader(): String {
-        val authHeader =
-                "Basic ${Base64.getEncoder().encodeToString("$apiKey:$apiSecret".toByteArray())}"
-        return authHeader
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true) data class UploadResponse(val url: String)
-
-    @JsonIgnoreProperties(ignoreUnknown = true) data class CompareResponse(val compareUrl: String)
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    data class ImageUploadResponse(
-            val uploadUrl: String? = null,
-            val url: String,
-            val message: String? = null
-    )
-    @JsonIgnoreProperties(ignoreUnknown = true) data class CreateJobResponse(val url: String)
-
-    data class UploadRequest(
-            val project: String,
-            val snaps: List<ScreenshotInfo>,
-            val link: String? = null,
-            val message: String? = null
-    )
-
-    data class CompareRequest(
-            val project: String,
-            val isAsync: Boolean,
-            val link: String? = null,
-            val message: String? = null
-    )
-    data class CreateJobRequest(
-            val project: String,
-            val sha1: String,
-            val sha2: String,
-            val link: String? = null,
-            val message: String? = null
-    )
-
-    data class ScreenshotInfo(
-            val component: String,
-            val variant: String,
-            val target: String,
-            val height: Int,
-            val width: Int,
-            val url: String,
-            val fileName: String
-    )
-
-    fun createReport(
-            screenshotsDir: File,
-            sha: String,
-            link: String? = null,
-            message: String? = null
-    ): UploadResponse {
-        if (!screenshotsDir.exists() || !screenshotsDir.isDirectory) {
-            throw IllegalArgumentException(
-                    "Screenshots directory does not exist: ${screenshotsDir.absolutePath}"
-            )
+        private fun createAuthHeader(): String {
+                val authHeader =
+                        "Basic ${Base64.getEncoder().encodeToString("$apiKey:$apiSecret".toByteArray())}"
+                return authHeader
         }
 
-        val screenshots = discoverScreenshots(screenshotsDir)
-        if (screenshots.isEmpty()) {
-            throw IllegalArgumentException(
-                    "No screenshots found in directory: ${screenshotsDir.absolutePath}"
-            )
-        }
+        @JsonIgnoreProperties(ignoreUnknown = true) data class UploadResponse(val url: String)
 
-        // Upload each screenshot and get their URLs
-        val screenshotsWithUrls =
-                screenshots.map { screenshot ->
-                    println("Uploading screenshot: ${screenshot.fileName}")
-                    val file = File(screenshotsDir, screenshot.fileName)
-                    if (!file.exists()) {
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        data class CompareResponse(val compareUrl: String)
+
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        data class ImageUploadResponse(
+                val uploadUrl: String? = null,
+                val url: String,
+                val message: String? = null
+        )
+        @JsonIgnoreProperties(ignoreUnknown = true) data class CreateJobResponse(val url: String)
+
+        data class UploadRequest(
+                val project: String,
+                val snaps: List<ScreenshotInfo>,
+                val link: String? = null,
+                val message: String? = null
+        )
+
+        data class CompareRequest(
+                val project: String,
+                val isAsync: Boolean,
+                val link: String? = null,
+                val message: String? = null
+        )
+        data class CreateJobRequest(
+                val project: String,
+                val sha1: String,
+                val sha2: String,
+                val link: String? = null,
+                val message: String? = null
+        )
+
+        data class ScreenshotInfo(
+                val component: String,
+                val variant: String,
+                val target: String,
+                val height: Int,
+                val width: Int,
+                val url: String,
+                val fileName: String
+        )
+
+        fun createReport(
+                screenshotsDir: File,
+                sha: String,
+                link: String? = null,
+                message: String? = null
+        ): UploadResponse {
+                if (!screenshotsDir.exists() || !screenshotsDir.isDirectory) {
                         throw IllegalArgumentException(
-                                "Screenshot file does not exist: ${file.absolutePath}"
+                                "Screenshots directory does not exist: ${screenshotsDir.absolutePath}"
                         )
-                    }
-                    val hash = ImageFileHashCalculator().calculate(file)
-                    val imageUrl = uploadImage(file, hash)
-                    println("Uploaded screenshot: ${screenshot.fileName} to $imageUrl")
-                    screenshot.copy(url = imageUrl)
                 }
 
-        val uploadRequest =
-                UploadRequest(
-                        project = project,
-                        snaps = screenshotsWithUrls,
-                        link = link,
-                        message = message
-                )
-
-        val requestBody =
-                objectMapper
-                        .writeValueAsString(uploadRequest)
-                        .toRequestBody("application/json".toMediaType())
-
-        val request =
-                Request.Builder()
-                        .url("$baseUrl/api/reports/$sha")
-                        .addHeader("Authorization", createAuthHeader())
-                        .post(requestBody)
-                        .build()
-
-        return executeRequest(request) { response: Response ->
-            objectMapper.readValue(response.body?.string(), UploadResponse::class.java)
-        }
-    }
-
-    fun compareReports(
-            sha1: String,
-            sha2: String,
-            link: String? = null,
-            message: String? = null
-    ): CompareResponse {
-        val compareRequest =
-                CompareRequest(project = project, isAsync = true, link = link, message = message)
-
-        // Tell Happo that we are about to run a job using https://happo.io/docs/api#createJob
-        val createJobRequest =
-                CreateJobRequest(
-                        project = project,
-                        sha1 = sha1,
-                        sha2 = sha2,
-                        link = link,
-                        message = message
-                )
-
-        val createJobRequestBody =
-                objectMapper
-                        .writeValueAsString(createJobRequest)
-                        .toRequestBody("application/json".toMediaType())
-        val jobRequest =
-                Request.Builder()
-                        .url("$baseUrl/api/jobs/$sha1/$sha2")
-                        .addHeader("Authorization", createAuthHeader())
-                        .post(createJobRequestBody)
-                        .build()
-        executeRequest(jobRequest) { response: Response ->
-            objectMapper.readValue(response.body?.string(), CreateJobResponse::class.java)
-        }
-
-        val requestBody =
-                objectMapper
-                        .writeValueAsString(compareRequest)
-                        .toRequestBody("application/json".toMediaType())
-        val request =
-                Request.Builder()
-                        .url("$baseUrl/api/reports/$sha1/compare/$sha2")
-                        .addHeader("Authorization", createAuthHeader())
-                        .post(requestBody)
-                        .build()
-
-        return executeRequest(request) { response: Response ->
-            objectMapper.readValue(response.body?.string(), CompareResponse::class.java)
-        }
-    }
-
-    fun getImageUploadUrl(hash: String): ImageUploadResponse {
-        val request =
-                Request.Builder()
-                        .url("$baseUrl/api/images/$hash/upload-url")
-                        .addHeader("Authorization", createAuthHeader())
-                        .get()
-                        .build()
-
-        return executeRequest(request) { response: Response ->
-            objectMapper.readValue(response.body?.string(), ImageUploadResponse::class.java)
-        }
-    }
-
-    fun uploadImageFile(uploadUrl: String, imageFile: File): String {
-        val requestBody =
-                MultipartBody.Builder()
-                        .setType(MultipartBody.FORM)
-                        .addFormDataPart(
-                                "file",
-                                imageFile.name,
-                                imageFile.asRequestBody("image/png".toMediaType())
+                val screenshots = discoverScreenshots(screenshotsDir)
+                if (screenshots.isEmpty()) {
+                        throw IllegalArgumentException(
+                                "No screenshots found in directory: ${screenshotsDir.absolutePath}"
                         )
-                        .build()
+                }
 
-        val request =
-                Request.Builder()
-                        .url(uploadUrl)
-                        .addHeader("Authorization", createAuthHeader())
-                        .post(requestBody)
-                        .build()
+                // Upload each screenshot and get their URLs
+                val screenshotsWithUrls =
+                        screenshots.map { screenshot ->
+                                println("Uploading screenshot: ${screenshot.fileName}")
+                                val file = File(screenshotsDir, screenshot.fileName)
+                                if (!file.exists()) {
+                                        throw IllegalArgumentException(
+                                                "Screenshot file does not exist: ${file.absolutePath}"
+                                        )
+                                }
+                                val hash = ImageFileHashCalculator().calculate(file)
+                                val imageUrl = uploadImage(file, hash)
+                                println("Uploaded screenshot: ${screenshot.fileName} to $imageUrl")
+                                screenshot.copy(url = imageUrl)
+                        }
 
-        return executeRequest(request) { response: Response ->
-            val responseBody = response.body?.string()
-            // The response should contain the final image URL
-            objectMapper.readValue(responseBody, ImageUploadResponse::class.java).url
-        }
-    }
+                val uploadRequest =
+                        UploadRequest(
+                                project = project,
+                                snaps = screenshotsWithUrls,
+                                link = link,
+                                message = message
+                        )
 
-    fun uploadImage(imageFile: File, hash: String): String {
-        val uploadResponse = getImageUploadUrl(hash)
+                val requestBody =
+                        objectMapper
+                                .writeValueAsString(uploadRequest)
+                                .toRequestBody("application/json".toMediaType())
 
-        return if (uploadResponse.uploadUrl != null) {
-            // Image needs to be uploaded
-            uploadImageFile(uploadResponse.uploadUrl, imageFile)
-        } else {
-            // Image already exists, return the existing URL
-            uploadResponse.url
-        }
-    }
+                val request =
+                        Request.Builder()
+                                .url("$baseUrl/api/reports/$sha")
+                                .addHeader("Authorization", createAuthHeader())
+                                .post(requestBody)
+                                .build()
 
-    private fun getImageDimensions(imageFile: File): Pair<Int, Int> {
-        val bufferedImage: BufferedImage = ImageIO.read(imageFile)
-        return Pair(bufferedImage.width, bufferedImage.height)
-    }
-
-    private fun mapFileToScreenshotInfo(file: File): ScreenshotInfo {
-        val (width, height) = getImageDimensions(file)
-
-        val (component, variant) = FilenameHelper().extractComponentAndVariant(file)
-        return ScreenshotInfo(
-                component = component,
-                variant = variant,
-                target = "device",
-                height = height,
-                width = width,
-                url = "",
-                fileName = file.name
-        )
-    }
-
-    fun discoverScreenshots(screenshotsDir: File): List<ScreenshotInfo> {
-        val screenshots = mutableListOf<ScreenshotInfo>()
-
-        screenshotsDir.listFiles()?.forEach { file ->
-            if (file.isFile && file.extension.lowercase().equals("png")) {
-                screenshots.add(mapFileToScreenshotInfo(file))
-            }
+                return executeRequest(request) { response: Response ->
+                        objectMapper.readValue(response.body?.string(), UploadResponse::class.java)
+                }
         }
 
-        return screenshots
-    }
+        fun compareReports(
+                sha1: String,
+                sha2: String,
+                link: String? = null,
+                message: String? = null
+        ): CompareResponse {
+                val compareRequest =
+                        CompareRequest(
+                                project = project,
+                                isAsync = true,
+                                link = link,
+                                message = message
+                        )
 
-    private fun <T> executeRequest(request: Request, responseHandler: (Response) -> T): T {
-        return client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                throw IOException(
-                        "Request failed: ${response.code} ${response.message} - ${response.body?.string()}"
+                // Tell Happo that we are about to run a job using
+                // https://happo.io/docs/api#createJob
+                val createJobRequest =
+                        CreateJobRequest(
+                                project = project,
+                                sha1 = sha1,
+                                sha2 = sha2,
+                                link = link,
+                                message = message
+                        )
+
+                val createJobRequestBody =
+                        objectMapper
+                                .writeValueAsString(createJobRequest)
+                                .toRequestBody("application/json".toMediaType())
+                val jobRequest =
+                        Request.Builder()
+                                .url("$baseUrl/api/jobs/$sha1/$sha2")
+                                .addHeader("Authorization", createAuthHeader())
+                                .post(createJobRequestBody)
+                                .build()
+                executeRequest(jobRequest) { response: Response ->
+                        objectMapper.readValue(
+                                response.body?.string(),
+                                CreateJobResponse::class.java
+                        )
+                }
+
+                val requestBody =
+                        objectMapper
+                                .writeValueAsString(compareRequest)
+                                .toRequestBody("application/json".toMediaType())
+                val request =
+                        Request.Builder()
+                                .url("$baseUrl/api/reports/$sha1/compare/$sha2")
+                                .addHeader("Authorization", createAuthHeader())
+                                .post(requestBody)
+                                .build()
+
+                return executeRequest(request) { response: Response ->
+                        objectMapper.readValue(response.body?.string(), CompareResponse::class.java)
+                }
+        }
+
+        fun getImageUploadUrl(hash: String): ImageUploadResponse {
+                val request =
+                        Request.Builder()
+                                .url("$baseUrl/api/images/$hash/upload-url")
+                                .addHeader("Authorization", createAuthHeader())
+                                .get()
+                                .build()
+
+                return executeRequest(request) { response: Response ->
+                        objectMapper.readValue(
+                                response.body?.string(),
+                                ImageUploadResponse::class.java
+                        )
+                }
+        }
+
+        fun uploadImageFile(uploadUrl: String, imageFile: File): String {
+                val requestBody =
+                        MultipartBody.Builder()
+                                .setType(MultipartBody.FORM)
+                                .addFormDataPart(
+                                        "file",
+                                        imageFile.name,
+                                        imageFile.asRequestBody("image/png".toMediaType())
+                                )
+                                .build()
+
+                val request =
+                        Request.Builder()
+                                .url(uploadUrl)
+                                .addHeader("Authorization", createAuthHeader())
+                                .post(requestBody)
+                                .build()
+
+                return executeRequest(request) { response: Response ->
+                        val responseBody = response.body?.string()
+                        // The response should contain the final image URL
+                        objectMapper.readValue(responseBody, ImageUploadResponse::class.java).url
+                }
+        }
+
+        fun uploadImage(imageFile: File, hash: String): String {
+                val uploadResponse = getImageUploadUrl(hash)
+
+                return if (uploadResponse.uploadUrl != null) {
+                        // Image needs to be uploaded
+                        uploadImageFile(uploadResponse.uploadUrl, imageFile)
+                } else {
+                        // Image already exists, return the existing URL
+                        uploadResponse.url
+                }
+        }
+
+        private fun getImageDimensions(imageFile: File): Pair<Int, Int> {
+                val bufferedImage: BufferedImage = ImageIO.read(imageFile)
+                return Pair(bufferedImage.width, bufferedImage.height)
+        }
+
+        private fun mapFileToScreenshotInfo(file: File): ScreenshotInfo {
+                val (width, height) = getImageDimensions(file)
+
+                val (component, variant) = FilenameHelper().extractComponentAndVariant(file)
+                return ScreenshotInfo(
+                        component = component,
+                        variant = variant,
+                        target = "device",
+                        height = height,
+                        width = width,
+                        url = "",
+                        fileName = file.name
                 )
-            }
-            responseHandler(response)
         }
-    }
+
+        fun discoverScreenshots(screenshotsDir: File): List<ScreenshotInfo> {
+                val screenshots = mutableListOf<ScreenshotInfo>()
+
+                screenshotsDir.listFiles()?.forEach { file ->
+                        if (file.isFile && file.extension.lowercase().equals("png")) {
+                                screenshots.add(mapFileToScreenshotInfo(file))
+                        }
+                }
+
+                return screenshots
+        }
+
+        private fun <T> executeRequest(request: Request, responseHandler: (Response) -> T): T {
+                var lastException: Exception? = null
+                val maxRetries = 3
+
+                for (attempt in 0..maxRetries) {
+                        try {
+                                return client.newCall(request).execute().use { response ->
+                                        if (!response.isSuccessful) {
+                                                val errorMessage =
+                                                        "Request failed: ${response.code} ${response.message} - ${response.body?.string()}"
+
+                                                // Retry on 5xx server errors
+                                                if (response.code >= 500 && attempt < maxRetries) {
+                                                        val delay = calculateRetryDelay(attempt)
+                                                        println(
+                                                                "Server error ${response.code}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})"
+                                                        )
+                                                        Thread.sleep(delay)
+                                                        throw IOException(errorMessage)
+                                                }
+
+                                                // Don't retry on client errors (4xx) or successful
+                                                // responses
+                                                throw IOException(errorMessage)
+                                        }
+                                        responseHandler(response)
+                                }
+                        } catch (e: IOException) {
+                                lastException = e
+
+                                // Check if this is a networking error that should be retried
+                                if (isRetryableException(e) && attempt < maxRetries) {
+                                        val delay = calculateRetryDelay(attempt)
+                                        println(
+                                                "Network error: ${e.message}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})"
+                                        )
+                                        Thread.sleep(delay)
+                                        continue
+                                }
+
+                                // If it's not retryable or we've exhausted retries, throw the
+                                // exception
+                                throw e
+                        }
+                }
+
+                // This should never be reached, but just in case
+                throw lastException ?: IOException("Request failed after $maxRetries retries")
+        }
+
+        private fun isRetryableException(exception: Exception): Boolean {
+                return when (exception) {
+                        is SocketTimeoutException -> true
+                        is UnknownHostException -> true
+                        is IOException -> {
+                                // Check for common network-related IOException messages
+                                val message = exception.message?.lowercase() ?: ""
+                                message.contains("connection") ||
+                                        message.contains("timeout") ||
+                                        message.contains("network") ||
+                                        message.contains("unreachable") ||
+                                        message.contains("refused")
+                        }
+                        else -> false
+                }
+        }
+
+        private fun calculateRetryDelay(attempt: Int): Long {
+                // Exponential backoff with jitter: baseDelay * 2^attempt + random jitter
+                val baseDelayMs = 1000L
+                val exponentialDelay = baseDelayMs * (2.0.pow(attempt)).toLong()
+                val jitter = (Math.random() * 1000).toLong() // Add up to 1 second of jitter
+                return min(exponentialDelay + jitter, 30000) // Cap at 30 seconds
+        }
 }
