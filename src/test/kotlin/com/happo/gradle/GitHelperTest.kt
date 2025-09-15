@@ -3,17 +3,9 @@ package com.happo.gradle
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
 class GitHelperTest {
-
-    @AfterEach
-    fun tearDown() {
-        // Clear system properties after each test
-        System.clearProperty("GITHUB_EVENT_NAME")
-        System.clearProperty("GITHUB_EVENT_PATH")
-    }
 
     @Test
     fun `should get HEAD SHA`() {
@@ -27,10 +19,12 @@ class GitHelperTest {
     @Test
     fun `should get HEAD SHA from GitHub event`() {
         val gitHelper = GitHelper()
-        val realHEAD = gitHelper.findHEADSha(disableGitHubDetection = true)
-        System.setProperty("GITHUB_EVENT_NAME", "pull_request")
-        System.setProperty("GITHUB_EVENT_PATH", "src/test/resources/github-event.json")
-        val sha = gitHelper.findHEADSha()
+        val realHEAD = gitHelper.findHEADSha()
+        val sha =
+                gitHelper.findHEADSha(
+                        githubEventName = "pull_request",
+                        githubEventPath = "src/test/resources/github-event.json"
+                )
 
         assertNotNull(sha)
         assertEquals(40, sha.length) // SHA should be 40 characters long
@@ -77,10 +71,7 @@ class GitHelperTest {
     @Test
     fun `should get commit link`() {
         val gitHelper = GitHelper()
-
-        System.setProperty("GITHUB_EVENT_NAME", "pull_request")
-        System.setProperty("GITHUB_EVENT_PATH", "src/test/resources/github-event.json")
-        val link = gitHelper.getCommitLink()
+        val link = gitHelper.getCommitLink(githubEventPath = "src/test/resources/github-event.json")
         assertNotNull(link)
     }
 }
