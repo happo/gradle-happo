@@ -122,11 +122,17 @@ publishing {
 
 // Signing configuration
 signing {
-    sign(publishing.publications["maven"])
+    // Only sign if we're not doing local publishing
+    val isLocalPublish = gradle.startParameter.taskNames.any { it.contains("MavenLocal") }
     
-    // Use GPG command line if signing properties are configured
-    val keyId = project.findProperty("signing.keyId") as String?
-    if (keyId != null) {
-        useGpgCmd()
+    if (!isLocalPublish) {
+        sign(publishing.publications["maven"])
+        
+        // Use GPG command line if signing properties are configured
+        val keyId = project.findProperty("signing.keyId") as String?
+        
+        if (keyId != null) {
+            useGpgCmd()
+        }
     }
 }
