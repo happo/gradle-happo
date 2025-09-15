@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     kotlin("jvm") version "1.9.21"
     `java-gradle-plugin`
@@ -7,6 +9,19 @@ plugins {
 
 group = "io.happo"
 version = "1.0.0"
+
+// Load local properties file if it exists
+val localPropertiesFile = file("gradle-local.properties")
+if (localPropertiesFile.exists()) {
+    val localProperties = Properties()
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+    // Add local properties to project properties so they can be accessed by plugins
+    for ((key, value) in localProperties) {
+        if (project.findProperty(key.toString()) == null) {
+            project.ext.set(key.toString(), value.toString())
+        }
+    }
+}
 
 repositories {
     mavenCentral()
@@ -108,4 +123,10 @@ publishing {
 // Signing configuration
 signing {
     sign(publishing.publications["maven"])
+    
+    // Use GPG command line if signing properties are configured
+    val keyId = project.findProperty("signing.keyId") as String?
+    if (keyId != null) {
+        useGpgCmd()
+    }
 }

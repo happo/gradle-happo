@@ -11,9 +11,11 @@ This guide explains how to publish the Happo Gradle Plugin to Maven Central.
 
 ## Setup Steps
 
+The build script automatically loads properties from `gradle-local.properties` if it exists. This file is gitignored to keep your credentials secure.
+
 ### 1. Configure Sonatype Credentials
 
-Add your Sonatype credentials to your local `gradle.properties` file (not committed to git):
+Create a `gradle-local.properties` file and add your Sonatype credentials:
 
 ```properties
 ossrhUsername=your-sonatype-username
@@ -22,21 +24,35 @@ ossrhPassword=your-sonatype-password
 
 ### 2. Configure GPG Signing
 
-Add your GPG configuration to your local `gradle.properties`:
+Configure `gradle-local.properties` with the following properties. To generate a
+new GPG signing key, run `gpg --full-generate-key`, then add the properties.
 
 ```properties
 signing.keyId=your-gpg-key-id
-signing.password=your-gpg-password
-signing.secretKeyRingFile=/path/to/your/secring.gpg
+signing.password=your-gpg-passphrase
+signing.secretKeyRingFile=/Users/yourusername/.gnupg/secring.gpg
 ```
 
-Alternatively, you can use environment variables:
+#### Finding Your GPG Key ID
 
-```bash
-export SIGNING_KEY_ID=your-gpg-key-id
-export SIGNING_PASSWORD=your-gpg-password
-export SIGNING_SECRET_KEY_RING_FILE=/path/to/your/secring.gpg
-```
+1. List your GPG keys:
+
+   ```bash
+   gpg --list-secret-keys --keyid-format LONG
+   ```
+
+2. Look for output like:
+
+   ```
+   sec   rsa4096/ABC123DEF4567890 2023-01-01 [SC] [expires: 2025-01-01]
+   ```
+
+   The key ID is `ABC123DEF4567890` (the part after the slash).
+
+3. Export your public key to add to Sonatype:
+   ```bash
+   gpg --armor --export ABC123DEF4567890 | pbcopy
+   ```
 
 ### 3. Update Version
 
