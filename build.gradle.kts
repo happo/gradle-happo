@@ -1,11 +1,27 @@
+import java.util.Properties
+
 plugins {
     kotlin("jvm") version "1.9.21"
     `java-gradle-plugin`
     `maven-publish`
+    signing
 }
 
-group = "com.happo"
+group = "io.happo"
 version = "1.0.0"
+
+// Load local properties file if it exists
+val localPropertiesFile = file("gradle-local.properties")
+if (localPropertiesFile.exists()) {
+    val localProperties = Properties()
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+    // Add local properties to project properties so they can be accessed by plugins
+    for ((key, value) in localProperties) {
+        if (project.findProperty(key.toString()) == null) {
+            project.ext.set(key.toString(), value.toString())
+        }
+    }
+}
 
 repositories {
     mavenCentral()
@@ -29,8 +45,8 @@ dependencies {
 gradlePlugin {
     plugins {
         create("happo") {
-            id = "com.happo.gradle"
-            implementationClass = "com.happo.gradle.HappoPlugin"
+            id = "io.happo.gradle"
+            implementationClass = "io.happo.gradle.HappoPlugin"
             displayName = "Happo Gradle Plugin"
             description = "A Gradle plugin for uploading and comparing Happo visual regression test reports"
         }
@@ -51,4 +67,72 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// Publishing configuration
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+            
+            groupId = project.group.toString()
+            artifactId = "gradle-happo"
+            version = project.version.toString()
+            
+            pom {
+                name.set("Happo Gradle Plugin")
+                description.set("A Gradle plugin for uploading and comparing Happo visual regression test reports")
+                url.set("https://github.com/happo/gradle-happo")
+                
+                licenses {
+                    license {
+                        name.set("The MIT License")
+                        url.set("https://opensource.org/licenses/MIT")
+                    }
+                }
+                
+                developers {
+                    developer {
+                        id.set("happo")
+                        name.set("Happo Team")
+                        email.set("support@happo.io")
+                    }
+                }
+                
+                scm {
+                    connection.set("scm:git:git://github.com/happo/gradle-happo.git")
+                    developerConnection.set("scm:git:ssh://github.com:happo/gradle-happo.git")
+                    url.set("https://github.com/happo/gradle-happo")
+                }
+            }
+        }
+    }
+    
+    repositories {
+        maven {
+            name = "sonatype"
+            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            credentials {
+                username = project.findProperty("ossrhUsername") as String?
+                password = project.findProperty("ossrhPassword") as String?
+            }
+        }
+    }
+}
+
+// Signing configuration
+signing {
+    // Only sign if we're not doing local publishing
+    val isLocalPublish = gradle.startParameter.taskNames.any { it.contains("MavenLocal") }
+    
+    if (!isLocalPublish) {
+        sign(publishing.publications["maven"])
+        
+        // Use GPG command line if signing properties are configured
+        val keyId = project.findProperty("signing.keyId") as String?
+        
+        if (keyId != null) {
+            useGpgCmd()
+        }
+    }
 }

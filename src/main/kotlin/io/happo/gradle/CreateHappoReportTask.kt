@@ -1,4 +1,4 @@
-package com.happo.gradle
+package io.happo.gradle
 
 import java.io.File
 import org.gradle.api.DefaultTask
@@ -36,7 +36,7 @@ abstract class CreateHappoReportTask : DefaultTask() {
         val sha = GitHelper().findHEADSha()
         val gitHelper = GitHelper()
 
-        // Use git commit subject as default message if not provided
+        // Auto-resolve message and link if they are not provided
         val reportMessage =
                 if (message.isNullOrBlank()) gitHelper.getCommitSubject(sha) else message
         val reportLink = if (link.isNullOrBlank()) gitHelper.getCommitLink() else link

@@ -50,3 +50,6 @@ Desktop.ini
 # Temporary files
 *.tmp
 *.temp
+
+# Local properties files
+gradle-local.properties

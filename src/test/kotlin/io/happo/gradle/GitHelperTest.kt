@@ -1,4 +1,4 @@
-package com.happo.gradle
+package io.happo.gradle
 
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
