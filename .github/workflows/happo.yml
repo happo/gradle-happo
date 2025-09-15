@@ -9,6 +9,9 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      HAPPO_API_KEY: ${{ secrets.HAPPO_API_KEY }}
+      HAPPO_API_SECRET: ${{ secrets.HAPPO_API_SECRET }}
 
     steps:
       - name: Checkout code
@@ -28,21 +31,11 @@ jobs:
       - name: Build Happo plugin
         run: ./gradlew build publishToMavenLocal --info
 
-      - name: Run Happo tasks in example project
+      - name: Create a Happo report in example project
         working-directory: ./example
-        env:
-          HAPPO_API_KEY: ${{ secrets.HAPPO_API_KEY }}
-          HAPPO_API_SECRET: ${{ secrets.HAPPO_API_SECRET }}
-        run: |
-          # Create Happo report
-          ../gradlew createHappoReport
+        run: ../gradlew createHappoReport
 
-          # Determine link for compareHappoReports
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            LINK="${{ github.event.pull_request.html_url }}"
-          else
-            LINK="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
-          fi
-
-          # Compare Happo reports with appropriate link
-          ../gradlew compareHappoReports -Phappo.link="$LINK"
+      - name: Compare Happo reports in example project
+        if: github.event_name == 'pull_request'
+        working-directory: ./example
+        run: ../gradlew compareHappoReports

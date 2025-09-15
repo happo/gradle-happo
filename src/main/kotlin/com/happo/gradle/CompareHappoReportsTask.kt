@@ -50,8 +50,11 @@ abstract class CompareHappoReportsTask : DefaultTask() {
             firstSha = gitHelper.findBaselineSha("HEAD^", baseBranch)
         }
         val fallbackShas = gitHelper.findFallbackShas(firstSha)
-        // Use git commit subject as default message if not provided
-        val reportMessage = message ?: gitHelper.getCommitSubject(secondSha)
+
+        // Auto-resolve message and link if they are not provided
+        val reportMessage =
+                if (message.isNullOrBlank()) gitHelper.getCommitSubject(secondSha) else message
+        val reportLink = if (link.isNullOrBlank()) gitHelper.getCommitLink() else link
 
         logger.lifecycle("Comparing Happo reports...")
         logger.lifecycle("Project: $projectName")
@@ -59,11 +62,11 @@ abstract class CompareHappoReportsTask : DefaultTask() {
         logger.lifecycle("Second SHA: $secondSha")
         logger.lifecycle("Fallback SHAs: $fallbackShas")
         logger.lifecycle("Message: $reportMessage")
-        link?.let { logger.lifecycle("Link: $it") }
+        reportLink?.let { logger.lifecycle("Link: $it") }
 
         try {
             val apiClient = HappoApiClient(apiKey, apiSecret, projectName, baseUrl = baseUrl)
-            val response = apiClient.compareReports(firstSha, secondSha, link, reportMessage)
+            val response = apiClient.compareReports(firstSha, secondSha, reportLink, reportMessage)
 
             logger.lifecycle("✅ Comparison created")
             logger.lifecycle(response.compareUrl)
