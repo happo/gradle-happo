@@ -1,4 +1,4 @@
-package com.happo.gradle
+package io.happo.gradle
 
 import java.io.File
 import org.gradle.api.provider.Property

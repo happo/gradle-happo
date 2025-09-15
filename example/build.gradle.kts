@@ -4,11 +4,11 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.happo:gradle-happo:1.0.0")
+        classpath("io.happo:gradle-happo:1.0.0")
     }
 }
 
-apply(plugin = "com.happo.gradle")
+apply(plugin = "io.happo.gradle")
 
 repositories {
     mavenLocal()
@@ -16,7 +16,7 @@ repositories {
 }
 
 // Configure the Happo extension
-project.extensions.configure<com.happo.gradle.HappoExtension>("happo") {
+project.extensions.configure<io.happo.gradle.HappoExtension>("happo") {
     apiKey.set(System.getenv("HAPPO_API_KEY") ?: "foobar")
     apiSecret.set(System.getenv("HAPPO_API_SECRET") ?: "foobar")
     projectName.set("default")

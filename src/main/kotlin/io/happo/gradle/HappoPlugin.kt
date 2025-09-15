@@ -1,4 +1,4 @@
-package com.happo.gradle
+package io.happo.gradle
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project

@@ -19,7 +19,7 @@ produce screenshots as PNG files.
 
 ```kotlin
 plugins {
-    id("com.happo.gradle")
+    id("io.happo.gradle")
 }
 ```
 
@@ -156,7 +156,7 @@ The plugin automatically extracts the test class name as the component and the t
 
 ```kotlin
 plugins {
-    id("com.happo.gradle")
+    id("io.happo.gradle")
 }
 ```
 
@@ -169,7 +169,7 @@ plugins {
 
 ```kotlin
 plugins {
-    id("com.happo.gradle")
+    id("io.happo.gradle")
 }
 
 repositories {
